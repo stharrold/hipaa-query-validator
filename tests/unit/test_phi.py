@@ -407,7 +407,7 @@ class TestEnhancedPHIDetection:
     """Tests for enhanced PHI detection across all token types (Issue #9)."""
 
     def test_phi_detection_in_non_identifier_tokens(self):
-        """Test PHI detection works for all token types."""
+        """Test PHI detection works for bare column name tokens."""
         # Test case where PHI might appear as bare token
         query = "SELECT ssn FROM person"  # ssn as bare name
 
@@ -415,7 +415,7 @@ class TestEnhancedPHIDetection:
             validate_phi(query, "test-phi-token-1")
 
     def test_phi_in_comparison_values(self):
-        """Test PHI detection in WHERE clause comparisons."""
+        """Test that PHI column names like 'email' are detected in WHERE clause conditions."""
         query = "SELECT id FROM person WHERE email = 'test@example.com'"
 
         with pytest.raises(DirectPHIIdentifierError):

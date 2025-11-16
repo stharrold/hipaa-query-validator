@@ -37,6 +37,9 @@ REQUIRED_ALIAS = "Count_Patients"
 # Aggregate functions to detect
 AGGREGATE_FUNCTIONS = {"COUNT", "SUM", "AVG", "MIN", "MAX", "STDDEV", "VARIANCE"}
 
+# Compiled regex pattern for GROUP BY detection
+GROUP_BY_PATTERN = re.compile(r"GROUP\s+BY", re.IGNORECASE)
+
 
 class AggregationValidator:
     """Validator for aggregation requirements."""
@@ -121,7 +124,7 @@ class AggregationValidator:
         # Check for GROUP BY in the flattened token string (more reliable)
         statement_str = str(statement).upper()
         # Use regex to handle any amount of whitespace between GROUP and BY
-        if re.search(r'GROUP\s+BY', statement_str):
+        if GROUP_BY_PATTERN.search(statement_str):
             self.has_group_by = True
 
         current_clause = None
@@ -159,7 +162,7 @@ class AggregationValidator:
                     elif isinstance(item, Identifier):
                         # Check if this identifier contains a function (aliased aggregate)
                         has_function = False
-                        if hasattr(item, 'tokens'):
+                        if hasattr(item, "tokens"):
                             for subtoken in item.tokens:
                                 if isinstance(subtoken, Function):
                                     self._check_function(subtoken, current_clause or "UNKNOWN")
@@ -179,7 +182,7 @@ class AggregationValidator:
                 if current_clause == "SELECT":
                     # Check if this identifier contains a function (aliased aggregate)
                     has_function = False
-                    if hasattr(token, 'tokens'):
+                    if hasattr(token, "tokens"):
                         for subtoken in token.tokens:
                             if isinstance(subtoken, Function):
                                 self._check_function(subtoken, current_clause)
@@ -303,12 +306,14 @@ def extract_group_by_columns(query: str) -> List[str]:
     # If token-based extraction didn't work, try regex fallback
     if not validator.group_by_columns:
         # Extract GROUP BY columns using regex
-        match = re.search(r'GROUP\s+BY\s+([^;]+?)(?:$|ORDER|HAVING|LIMIT)',
-                         query, re.IGNORECASE | re.DOTALL)
+        # Note: This pattern is more complex than GROUP_BY_PATTERN, so we don't use the compiled version
+        match = re.search(
+            r"GROUP\s+BY\s+([^;]+?)(?:$|ORDER|HAVING|LIMIT)", query, re.IGNORECASE | re.DOTALL
+        )
         if match:
             group_by_clause = match.group(1).strip()
             # Split by comma and clean up
-            columns = [col.strip() for col in group_by_clause.split(',')]
+            columns = [col.strip() for col in group_by_clause.split(",")]
             return columns
 
     return validator.group_by_columns

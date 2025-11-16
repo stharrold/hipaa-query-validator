@@ -133,10 +133,10 @@ PHI identifiers are defined in `config/schemas/phi_identifiers.yaml`. When addin
 **Test Organization:**
 ```
 tests/
-├── unit/                    # Isolated component tests (93 tests)
+├── unit/                    # Isolated component tests (95 tests)
 │   ├── test_ascii_input.py  # 29 ASCII validation tests
-│   ├── test_phi.py          # 34 PHI validation tests
-│   └── test_aggregation.py  # 30 aggregation tests
+│   ├── test_phi.py          # 38 PHI validation tests
+│   └── test_aggregation.py  # 28 aggregation tests
 └── integration/             # End-to-end workflows (17 tests)
     └── test_end_to_end.py   # Full validation pipeline
 ```
