@@ -341,7 +341,7 @@ class PHIValidator:
             return
 
         value = token.value
-        if not value or token.is_whitespace:
+        if not value or (hasattr(token, "is_whitespace") and token.is_whitespace):
             return
 
         # Skip keywords and wildcards
