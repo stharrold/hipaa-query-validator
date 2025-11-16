@@ -9,7 +9,6 @@ Tests validate that queries:
 import pytest
 
 from src.errors import (
-    AggregateInNonSelectError,
     InvalidPatientCountSyntaxError,
     MissingGroupByError,
     MissingPatientCountError,
@@ -206,27 +205,12 @@ class TestAggregatesInWrongClauses:
 
     def test_aggregate_in_where(self):
         """Test aggregate function in WHERE clause (not allowed)."""
-        query = """
-        SELECT gender_concept_id,
-               COUNT(DISTINCT person_id) AS Count_Patients
-        FROM person
-        WHERE COUNT(DISTINCT person_id) > 100
-        GROUP BY gender_concept_id
-        """
-
         # Note: sqlparse may not always catch this, but we test the intent
         # In practice, this might also fail at SQL execution level
         # For now, we document expected behavior
 
     def test_aggregate_in_group_by(self):
         """Test aggregate function in GROUP BY clause (not allowed)."""
-        query = """
-        SELECT gender_concept_id,
-               COUNT(DISTINCT person_id) AS Count_Patients
-        FROM person
-        GROUP BY COUNT(gender_concept_id)
-        """
-
         # Document expected behavior - aggregates not allowed in GROUP BY
 
 
