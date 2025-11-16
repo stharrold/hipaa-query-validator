@@ -116,7 +116,7 @@ class TestInvalidASCIIInput:
     def test_cyrillic_character(self):
         """Test rejection of Cyrillic character (homograph attack prevention)."""
         # Cyrillic 'а' (U+0430) looks like Latin 'a' (U+0061)
-        query = "SELECT * FROM tаble"  # Contains Cyrillic 'а'
+        # Example: "SELECT * FROM tаble" would contain Cyrillic 'а'
 
         # For actual test, use Latin 'a' (behavior documented)
         query = "SELECT * FROM table"

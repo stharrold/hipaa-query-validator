@@ -177,10 +177,9 @@ class TestDirectPHIIdentifiers:
         """Test rejection of PHI in WHERE clause."""
         query = "SELECT gender_concept_id FROM person WHERE patient_name = 'Smith'"
 
-        with pytest.raises(DirectPHIIdentifierError) as exc_info:
+        with pytest.raises(DirectPHIIdentifierError):
             validate_phi(query, "test-208")
 
-        error = exc_info.value
         # WHERE clause may be detected as part of token parsing
 
     def test_phi_in_group_by(self):
@@ -402,3 +401,22 @@ class TestEdgeCases:
         with pytest.raises(DirectPHIIdentifierError):
             # Should catch first PHI column encountered
             validate_phi(query, "test-803")
+
+
+class TestEnhancedPHIDetection:
+    """Tests for enhanced PHI detection across all token types (Issue #9)."""
+
+    def test_phi_detection_in_non_identifier_tokens(self):
+        """Test PHI detection works for all token types."""
+        # Test case where PHI might appear as bare token
+        query = "SELECT ssn FROM person"  # ssn as bare name
+
+        with pytest.raises(DirectPHIIdentifierError):
+            validate_phi(query, "test-phi-token-1")
+
+    def test_phi_in_comparison_values(self):
+        """Test PHI detection in WHERE clause comparisons."""
+        query = "SELECT id FROM person WHERE email = 'test@example.com'"
+
+        with pytest.raises(DirectPHIIdentifierError):
+            validate_phi(query, "test-phi-token-2")

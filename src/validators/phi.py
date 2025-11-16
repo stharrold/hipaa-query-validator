@@ -26,11 +26,11 @@ Blocked Identifiers (18 categories):
 
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 
 import sqlparse
 import yaml
-from sqlparse.sql import Identifier, IdentifierList, Token
+from sqlparse.sql import Identifier, IdentifierList
 from sqlparse.tokens import Keyword, Wildcard
 
 from ..errors import (
@@ -40,6 +40,9 @@ from ..errors import (
     SelectStarError,
 )
 from ..models import ValidationResult
+
+# Compiled regex pattern for SELECT * detection
+SELECT_STAR_PATTERN = re.compile(r'\bSELECT\s+\*\s+FROM\b')
 
 
 class PHIValidator:
@@ -247,8 +250,7 @@ class PHIValidator:
         # Check for SELECT * in the statement string (more reliable)
         statement_upper = str(statement).upper().replace('\n', ' ').replace('\t', ' ')
         # Match SELECT * with optional whitespace
-        import re
-        if re.search(r'\bSELECT\s+\*\s+FROM\b', statement_upper):
+        if SELECT_STAR_PATTERN.search(statement_upper):
             raise SelectStarError()
 
         # Track which clause we're in - start with SELECT as default for first identifiers
@@ -311,12 +313,60 @@ class PHIValidator:
                 self._check_identifier(token, clause)
             elif isinstance(token, IdentifierList):
                 for identifier in token.get_identifiers():
-                    # Only check if it's actually an Identifier, not a bare Token
                     if isinstance(identifier, Identifier):
                         self._check_identifier(identifier, clause)
-            elif hasattr(token, 'tokens'):
-                # Recursively check nested tokens
+                    else:
+                        # Check non-Identifier items too
+                        self._check_token_for_phi(identifier, clause)
+            else:
+                # Check other token types
+                self._check_token_for_phi(token, clause)
+
+            # Recurse into nested tokens
+            if hasattr(token, 'tokens'):
                 self._check_tokens_for_identifiers(token.tokens, clause)
+
+    def _check_token_for_phi(self, token: object, clause: str) -> None:
+        """Check any token for PHI patterns.
+
+        Checks non-Identifier tokens for PHI column names.
+        Complements _check_identifier for comprehensive coverage.
+
+        Args:
+            token: Token to check for PHI patterns
+            clause: SQL clause context
+        """
+        # Skip if no value or is whitespace/punctuation
+        if not hasattr(token, 'value'):
+            return
+
+        value = token.value
+        if not value or token.is_whitespace:
+            return
+
+        # Skip keywords and wildcards
+        if hasattr(token, 'ttype') and token.ttype in (Keyword, Wildcard):
+            return
+
+        # Skip punctuation
+        if hasattr(token, 'ttype') and token.ttype is sqlparse.tokens.Punctuation:
+            return
+
+        # Check value against PHI patterns
+        column_lower = str(value).lower()
+
+        if column_lower in self.direct_identifiers:
+            raise DirectPHIIdentifierError(
+                column_name=str(value),
+                identifier_type=self._get_identifier_type(column_lower),
+                clause=clause,
+            )
+
+        if column_lower in self.geographic_prohibited:
+            raise GeographicPHIError(column_name=str(value), clause=clause)
+
+        if column_lower in self.date_prohibited:
+            raise DatePHIError(column_name=str(value), clause=clause)
 
     def _check_identifier(self, identifier: Identifier, clause: str) -> None:
         """Check if an identifier is a PHI column.

@@ -16,7 +16,6 @@ provides strong privacy protection for aggregate data.
 import re
 
 import sqlparse
-from sqlparse.sql import Token
 from sqlparse.tokens import Keyword
 
 from .errors import CTENotAllowedError, SubqueryNotAllowedError
@@ -138,7 +137,6 @@ class SQLEnforcer:
             return True
 
         # Method 2: Check for parenthesized subqueries using regex
-        import re
         statement_str = str(statement).upper()
         # Look for SELECT inside parentheses (subquery pattern)
         if re.search(r'\(\s*SELECT\s', statement_str):

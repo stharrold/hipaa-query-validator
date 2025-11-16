@@ -11,15 +11,13 @@ The minimum threshold of 20,000 patients is enforced separately in Layer 4.
 """
 
 import re
-from typing import List, Optional, Set, Tuple
+from typing import List, Tuple
 
 import sqlparse
-from sqlparse.sql import Function, Identifier, IdentifierList, Parenthesis, Token
-from sqlparse.tokens import Keyword
+from sqlparse.sql import Function, Identifier, IdentifierList
 
 from ..errors import (
     AggregateInNonSelectError,
-    InvalidGroupByColumnError,
     InvalidPatientCountSyntaxError,
     MissingGroupByError,
     MissingPatientCountError,
