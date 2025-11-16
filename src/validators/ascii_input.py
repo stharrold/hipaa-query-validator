@@ -9,8 +9,6 @@ Security: Prevents Unicode normalization attacks, homograph attacks, and
           zero-width character injection
 """
 
-from typing import Optional
-
 from ..errors import (
     EmptyQueryError,
     InvalidControlCharacterError,
