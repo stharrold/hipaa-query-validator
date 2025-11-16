@@ -352,6 +352,10 @@ class PHIValidator:
         if hasattr(token, "ttype") and token.ttype is sqlparse.tokens.Punctuation:
             return
 
+        # Skip string literals (to avoid false positives)
+        if hasattr(token, "ttype") and token.ttype in sqlparse.tokens.String:
+            return
+
         # Check value against PHI patterns
         column_lower = str(value).lower()
 

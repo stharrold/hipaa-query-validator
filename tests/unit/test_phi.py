@@ -420,3 +420,15 @@ class TestEnhancedPHIDetection:
 
         with pytest.raises(DirectPHIIdentifierError):
             validate_phi(query, "test-phi-token-2")
+
+    def test_string_literals_not_flagged_as_phi(self):
+        """Test that string literal values containing PHI patterns are not flagged."""
+        # The column name 'description' is allowed, the value 'email' is a string literal
+        query = "SELECT person_id FROM person WHERE description = 'email'"
+        result = validate_phi(query, "test-phi-string-literal-001")
+        assert result.success is True  # String literal 'email' should not be flagged
+
+        # Another test: PHI pattern in string value
+        query = "SELECT person_id FROM person WHERE note = 'patient_name is important'"
+        result = validate_phi(query, "test-phi-string-literal-002")
+        assert result.success is True  # 'patient_name' as string value should pass
