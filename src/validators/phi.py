@@ -42,7 +42,7 @@ from ..errors import (
 from ..models import ValidationResult
 
 # Compiled regex pattern for SELECT * detection
-SELECT_STAR_PATTERN = re.compile(r'\bSELECT\s+\*\s+FROM\b')
+SELECT_STAR_PATTERN = re.compile(r"\bSELECT\s+\*\s+FROM\b")
 
 
 class PHIValidator:
@@ -56,9 +56,7 @@ class PHIValidator:
         """
         self.phi_config = self._load_phi_config(phi_config_path)
         self.direct_identifiers = self._build_identifier_patterns("direct_identifiers")
-        self.geographic_prohibited = self._build_identifier_patterns(
-            "geographic_prohibited"
-        )
+        self.geographic_prohibited = self._build_identifier_patterns("geographic_prohibited")
         self.date_prohibited = self._build_identifier_patterns("date_prohibited")
 
     def _load_phi_config(self, config_path: Optional[Path]) -> Dict:
@@ -72,7 +70,9 @@ class PHIValidator:
         """
         if config_path is None:
             # Use default configuration path
-            config_path = Path(__file__).parent.parent.parent / "config" / "schemas" / "phi_identifiers.yaml"
+            config_path = (
+                Path(__file__).parent.parent.parent / "config" / "schemas" / "phi_identifiers.yaml"
+            )
 
         if not config_path.exists():
             # Return hardcoded defaults if config not found
@@ -248,7 +248,7 @@ class PHIValidator:
             DatePHIError: If date PHI found
         """
         # Check for SELECT * in the statement string (more reliable)
-        statement_upper = str(statement).upper().replace('\n', ' ').replace('\t', ' ')
+        statement_upper = str(statement).upper().replace("\n", " ").replace("\t", " ")
         # Match SELECT * with optional whitespace
         if SELECT_STAR_PATTERN.search(statement_upper):
             raise SelectStarError()
@@ -297,7 +297,7 @@ class PHIValidator:
                 for identifier in token.get_identifiers():
                     self._check_identifier(identifier, current_clause)
             # Also recursively check other complex tokens in WHERE/ON/HAVING context
-            elif hasattr(token, 'tokens') and current_clause in ("WHERE", "ON", "HAVING"):
+            elif hasattr(token, "tokens") and current_clause in ("WHERE", "ON", "HAVING"):
                 # Recursively check sub-tokens in WHERE/ON/HAVING clauses
                 self._check_tokens_for_identifiers(token.tokens, current_clause)
 
@@ -323,7 +323,7 @@ class PHIValidator:
                 self._check_token_for_phi(token, clause)
 
             # Recurse into nested tokens
-            if hasattr(token, 'tokens'):
+            if hasattr(token, "tokens"):
                 self._check_tokens_for_identifiers(token.tokens, clause)
 
     def _check_token_for_phi(self, token: object, clause: str) -> None:
@@ -335,21 +335,30 @@ class PHIValidator:
         Args:
             token: Token to check for PHI patterns
             clause: SQL clause context
+
+        Raises:
+            DirectPHIIdentifierError: If a direct PHI identifier is detected.
+            GeographicPHIError: If a geographic PHI identifier is detected.
+            DatePHIError: If a date PHI identifier is detected.
         """
         # Skip if no value or is whitespace/punctuation
-        if not hasattr(token, 'value'):
+        if not hasattr(token, "value"):
             return
 
         value = token.value
-        if not value or token.is_whitespace:
+        if not value or (hasattr(token, "is_whitespace") and token.is_whitespace):
             return
 
         # Skip keywords and wildcards
-        if hasattr(token, 'ttype') and token.ttype in (Keyword, Wildcard):
+        if hasattr(token, "ttype") and token.ttype in (Keyword, Wildcard):
             return
 
         # Skip punctuation
-        if hasattr(token, 'ttype') and token.ttype is sqlparse.tokens.Punctuation:
+        if hasattr(token, "ttype") and token.ttype is sqlparse.tokens.Punctuation:
+            return
+
+        # Skip string literals (to avoid false positives)
+        if hasattr(token, "ttype") and token.ttype in sqlparse.tokens.String:
             return
 
         # Check value against PHI patterns
@@ -441,50 +450,39 @@ class PHIValidator:
             Human-readable identifier type
         """
         # Map common patterns to identifier types
-        if any(
-            pattern in column_name
-            for pattern in ["name", "first", "last", "given", "family"]
-        ):
+        if any(pattern in column_name for pattern in ["name", "first", "last", "given", "family"]):
             return "name (Category 1)"
         if any(pattern in column_name for pattern in ["ssn", "social_security"]):
             return "SSN (Category 7)"
         if any(pattern in column_name for pattern in ["mrn", "medical_record"]):
             return "medical record number (Category 8)"
-        if any(
-            pattern in column_name
-            for pattern in ["phone", "telephone", "tel", "fax"]
-        ):
+        if any(pattern in column_name for pattern in ["phone", "telephone", "tel", "fax"]):
             return "telephone/fax number (Categories 4-5)"
         if "email" in column_name:
             return "email address (Category 6)"
         if any(
-            pattern in column_name
-            for pattern in ["account", "beneficiary", "subscriber", "member"]
+            pattern in column_name for pattern in ["account", "beneficiary", "subscriber", "member"]
         ):
             return "account/beneficiary number (Categories 9-10)"
-        if any(
-            pattern in column_name
-            for pattern in ["license", "certificate", "driver"]
-        ):
+        if any(pattern in column_name for pattern in ["license", "certificate", "driver"]):
             return "license/certificate number (Category 11)"
-        if any(
-            pattern in column_name for pattern in ["vehicle", "vin", "license_plate"]
-        ):
+        if any(pattern in column_name for pattern in ["vehicle", "vin", "license_plate"]):
             return "vehicle identifier (Category 12)"
         if any(pattern in column_name for pattern in ["device", "serial"]):
             return "device identifier (Category 13)"
         if any(pattern in column_name for pattern in ["url", "web", "ip", "mac"]):
             return "web/IP identifier (Categories 14-15)"
         if any(
-            pattern in column_name
-            for pattern in ["fingerprint", "biometric", "retinal", "facial"]
+            pattern in column_name for pattern in ["fingerprint", "biometric", "retinal", "facial"]
         ):
             return "biometric identifier (Category 16)"
 
         return "unique identifier (Category 18)"
 
 
-def validate_phi(query: str, request_id: str, config_path: Optional[Path] = None) -> ValidationResult:
+def validate_phi(
+    query: str, request_id: str, config_path: Optional[Path] = None
+) -> ValidationResult:
     """Validate query for PHI columns (convenience function).
 
     Args:

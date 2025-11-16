@@ -25,6 +25,9 @@ from .models import ValidationResult
 # Minimum patient count threshold (per HIPAA Safe Harbor guidance)
 MIN_PATIENT_COUNT = 20000
 
+# Compiled regex pattern for subquery detection
+SUBQUERY_PATTERN = re.compile(r"\(\s*SELECT\s", re.IGNORECASE)
+
 
 class SQLEnforcer:
     """Enforces minimum patient count threshold via SQL wrapper."""
@@ -139,7 +142,7 @@ class SQLEnforcer:
         # Method 2: Check for parenthesized subqueries using regex
         statement_str = str(statement).upper()
         # Look for SELECT inside parentheses (subquery pattern)
-        if re.search(r'\(\s*SELECT\s', statement_str):
+        if SUBQUERY_PATTERN.search(statement_str):
             return True
 
         return False
