@@ -1,0 +1,158 @@
+# HIPAA Query Validator Configuration Template
+#
+# Copy this file to validator.yaml and customize for your deployment.
+# DO NOT commit validator.yaml to version control (it's in .gitignore)
+
+# General Settings
+validator:
+  name: "HIPAA Query Validator"
+  version: "1.0.0"
+  environment: "production"  # Options: development, staging, production
+
+# Security Settings
+security:
+  # Minimum patient count threshold for de-identification
+  min_patient_count: 20000
+
+  # Enable strict mode (reject queries with any warnings)
+  strict_mode: true
+
+  # Validation layers to enable (all enabled by default)
+  enabled_layers:
+    - ascii_input      # Layer 0
+    - schema           # Layer 1
+    - phi              # Layer 2
+    - aggregation      # Layer 3
+    - enforcement      # Layer 4
+    - ascii_output     # Layer 8
+
+# Schema Configuration
+schema:
+  # Primary schema standard
+  standard: "OMOP"  # Options: OMOP, FHIR, CMS_QDM
+
+  # Schema version
+  version: "5.4"
+
+  # Path to schema definition file
+  schema_file: "config/schemas/omop_5.4.yaml"
+
+  # Path to PHI identifiers configuration
+  phi_identifiers_file: "config/schemas/phi_identifiers.yaml"
+
+# Performance Settings
+performance:
+  # Maximum query length (characters)
+  max_query_length: 10000
+
+  # Validation timeout (milliseconds)
+  validation_timeout_ms: 10
+
+  # Maximum allowed validation time before warning (milliseconds)
+  max_validation_time_ms: 10
+
+# Audit Logging
+audit:
+  # Enable audit logging (required for HIPAA compliance)
+  enabled: true
+
+  # Audit log file path (JSONL format)
+  log_file: "logs/audit.jsonl"
+
+  # Retention period (days) - HIPAA requires 6 years (2190 days)
+  retention_days: 2190
+
+  # Include query hashes in audit logs
+  include_query_hash: true
+
+  # Include user information (if available)
+  include_user_info: true
+
+# Educational Responses
+educational:
+  # Enable educational guidance in error responses
+  enabled: true
+
+  # Include correct pattern examples
+  include_examples: true
+
+  # Include documentation links
+  include_documentation_links: true
+
+  # Verbosity level (1-3)
+  # 1: Brief error messages only
+  # 2: Error messages + educational guidance
+  # 3: Error messages + guidance + examples + links
+  verbosity: 3
+
+# Error Handling
+error_handling:
+  # Return detailed error information (disable in production for security)
+  detailed_errors: false
+
+  # Include stack traces in error responses (development only)
+  include_stack_traces: false
+
+  # Maximum number of errors to return (for queries with multiple issues)
+  max_errors_returned: 1
+
+# Monitoring
+monitoring:
+  # Enable performance metrics collection
+  enable_metrics: true
+
+  # Metrics export format
+  metrics_format: "prometheus"  # Options: prometheus, statsd, json
+
+  # Alert on validation failures
+  alert_on_failures: true
+
+  # Alert threshold (failures per hour)
+  failure_alert_threshold: 10
+
+# Integration Settings
+integration:
+  # Database connection (for query execution - not implemented in Phase 1)
+  database:
+    enabled: false
+    connection_string: ""
+    timeout_seconds: 300
+
+  # Container runtime (for zero-knowledge execution - not implemented in Phase 1)
+  container:
+    enabled: false
+    runtime: "podman"  # Options: podman, docker
+    image: "omop-readonly:latest"
+
+# Development Settings (disable in production)
+development:
+  # Enable debug mode
+  debug: false
+
+  # Print validation timing information
+  print_timing: false
+
+  # Save validated queries to file
+  save_queries: false
+  query_log_file: "logs/queries.log"
+
+# Compliance
+compliance:
+  # HIPAA compliance mode
+  hipaa_compliance: true
+
+  # TEFCA standards compliance
+  tefca_compliance: true
+
+  # Require all 8 validation layers
+  require_all_layers: false  # Phase 1: Only layers 0,2,3,4 implemented
+
+  # Enforce Safe Harbor de-identification
+  safe_harbor_mode: true
+
+# Notes:
+# 1. This is a template - copy to validator.yaml for your deployment
+# 2. DO NOT commit validator.yaml with secrets to version control
+# 3. Review security settings carefully for your environment
+# 4. Audit logging is required for HIPAA compliance
+# 5. In production, set detailed_errors: false for security

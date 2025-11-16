@@ -1,0 +1,257 @@
+# OMOP Common Data Model v5.4 Schema Definition
+#
+# This is a simplified schema definition for validation purposes.
+# Full schema: https://ohdsi.github.io/CommonDataModel/cdm54.html
+#
+# Version: 5.4
+# License: Apache 2.0
+# Last Updated: 2023
+
+version: "5.4"
+standard: "OMOP CDM"
+
+# Clinical Data Tables
+tables:
+  person:
+    description: "Demographics and characteristics of healthcare recipients"
+    columns:
+      - person_id  # Primary key
+      - gender_concept_id
+      - year_of_birth  # ALLOWED: year only
+      - month_of_birth  # PROHIBITED: PHI (date)
+      - day_of_birth  # PROHIBITED: PHI (date)
+      - birth_datetime  # PROHIBITED: PHI (date)
+      - race_concept_id
+      - ethnicity_concept_id
+      - location_id  # Foreign key to location (check geographic restrictions)
+      - provider_id
+      - care_site_id
+      - person_source_value
+      - gender_source_value
+      - race_source_value
+      - ethnicity_source_value
+
+  observation_period:
+    description: "Spans of time for which a person is at-risk to have clinical events recorded"
+    columns:
+      - observation_period_id
+      - person_id
+      - observation_period_start_date  # PROHIBITED: PHI (date)
+      - observation_period_end_date  # PROHIBITED: PHI (date)
+      - period_type_concept_id
+
+  visit_occurrence:
+    description: "Events where persons engage with the healthcare system"
+    columns:
+      - visit_occurrence_id
+      - person_id
+      - visit_concept_id
+      - visit_start_date  # PROHIBITED: PHI (date)
+      - visit_start_datetime  # PROHIBITED: PHI (date)
+      - visit_end_date  # PROHIBITED: PHI (date)
+      - visit_end_datetime  # PROHIBITED: PHI (date)
+      - visit_type_concept_id
+      - provider_id
+      - care_site_id
+      - visit_source_value
+      - admitted_from_concept_id
+      - discharged_to_concept_id
+
+  condition_occurrence:
+    description: "Records of diagnoses, symptoms, or medical conditions"
+    columns:
+      - condition_occurrence_id
+      - person_id
+      - condition_concept_id
+      - condition_start_date  # PROHIBITED: PHI (date)
+      - condition_start_datetime  # PROHIBITED: PHI (date)
+      - condition_end_date  # PROHIBITED: PHI (date)
+      - condition_end_datetime  # PROHIBITED: PHI (date)
+      - condition_type_concept_id
+      - condition_status_concept_id
+      - stop_reason
+      - provider_id
+      - visit_occurrence_id
+      - condition_source_value
+      - condition_source_concept_id
+
+  drug_exposure:
+    description: "Records of drug utilization including prescriptions and administrations"
+    columns:
+      - drug_exposure_id
+      - person_id
+      - drug_concept_id
+      - drug_exposure_start_date  # PROHIBITED: PHI (date)
+      - drug_exposure_start_datetime  # PROHIBITED: PHI (date)
+      - drug_exposure_end_date  # PROHIBITED: PHI (date)
+      - drug_exposure_end_datetime  # PROHIBITED: PHI (date)
+      - drug_type_concept_id
+      - stop_reason
+      - refills
+      - quantity
+      - days_supply
+      - sig
+      - route_concept_id
+      - lot_number
+      - provider_id
+      - visit_occurrence_id
+      - drug_source_value
+      - drug_source_concept_id
+
+  procedure_occurrence:
+    description: "Records of procedures performed on a person"
+    columns:
+      - procedure_occurrence_id
+      - person_id
+      - procedure_concept_id
+      - procedure_date  # PROHIBITED: PHI (date)
+      - procedure_datetime  # PROHIBITED: PHI (date)
+      - procedure_end_date  # PROHIBITED: PHI (date)
+      - procedure_end_datetime  # PROHIBITED: PHI (date)
+      - procedure_type_concept_id
+      - modifier_concept_id
+      - quantity
+      - provider_id
+      - visit_occurrence_id
+      - procedure_source_value
+      - procedure_source_concept_id
+
+  measurement:
+    description: "Records of lab results, vital signs, and other measurements"
+    columns:
+      - measurement_id
+      - person_id
+      - measurement_concept_id
+      - measurement_date  # PROHIBITED: PHI (date)
+      - measurement_datetime  # PROHIBITED: PHI (date)
+      - measurement_type_concept_id
+      - operator_concept_id
+      - value_as_number
+      - value_as_concept_id
+      - unit_concept_id
+      - range_low
+      - range_high
+      - provider_id
+      - visit_occurrence_id
+      - measurement_source_value
+      - measurement_source_concept_id
+      - unit_source_value
+
+  observation:
+    description: "Clinical facts about a person obtained in the context of examination"
+    columns:
+      - observation_id
+      - person_id
+      - observation_concept_id
+      - observation_date  # PROHIBITED: PHI (date)
+      - observation_datetime  # PROHIBITED: PHI (date)
+      - observation_type_concept_id
+      - value_as_number
+      - value_as_string
+      - value_as_concept_id
+      - qualifier_concept_id
+      - unit_concept_id
+      - provider_id
+      - visit_occurrence_id
+      - observation_source_value
+      - observation_source_concept_id
+      - unit_source_value
+
+  death:
+    description: "Records of death of a person"
+    columns:
+      - person_id
+      - death_date  # PROHIBITED: PHI (date)
+      - death_datetime  # PROHIBITED: PHI (date)
+      - death_type_concept_id
+      - cause_concept_id
+      - cause_source_value
+      - cause_source_concept_id
+
+  # Health System Tables
+  location:
+    description: "Geographic locations"
+    columns:
+      - location_id
+      - address_1  # PROHIBITED: PHI (address)
+      - address_2  # PROHIBITED: PHI (address)
+      - city  # PROHIBITED: PHI (geographic)
+      - state  # ALLOWED: state-level
+      - zip  # PROHIBITED: PHI (5-digit ZIP)
+      - county  # PROHIBITED: PHI (geographic)
+      - country
+      - latitude  # PROHIBITED: PHI (geographic)
+      - longitude  # PROHIBITED: PHI (geographic)
+      - location_source_value
+
+  care_site:
+    description: "Healthcare delivery locations"
+    columns:
+      - care_site_id
+      - care_site_name
+      - place_of_service_concept_id
+      - location_id
+      - care_site_source_value
+
+  provider:
+    description: "Healthcare providers"
+    columns:
+      - provider_id
+      - provider_name  # PROHIBITED: PHI (name)
+      - npi  # PROHIBITED: PHI (unique ID)
+      - dea  # PROHIBITED: PHI (license)
+      - specialty_concept_id
+      - care_site_id
+      - year_of_birth  # ALLOWED: year only
+      - gender_concept_id
+      - provider_source_value
+      - specialty_source_value
+
+  # Vocabularies and Concepts
+  concept:
+    description: "Standardized vocabulary terms"
+    columns:
+      - concept_id
+      - concept_name
+      - domain_id
+      - vocabulary_id
+      - concept_class_id
+      - standard_concept
+      - concept_code
+      - valid_start_date
+      - valid_end_date
+      - invalid_reason
+
+# Validation Rules
+validation_rules:
+  allowed_aggregations:
+    - person_id  # For COUNT(DISTINCT person_id)
+    - gender_concept_id
+    - race_concept_id
+    - ethnicity_concept_id
+    - year_of_birth
+    - state  # From location table
+
+  prohibited_direct_selection:
+    - month_of_birth
+    - day_of_birth
+    - birth_datetime
+    - All date/datetime columns
+    - location.city
+    - location.zip
+    - location.county
+    - location.latitude
+    - location.longitude
+    - provider.provider_name
+    - provider.npi
+
+  required_minimum_count:
+    threshold: 20000
+    column: "COUNT(DISTINCT person_id) AS Count_Patients"
+
+# Notes:
+# 1. This is a simplified schema - full OMOP CDM has additional tables
+# 2. All date/datetime columns are prohibited under HIPAA (except year)
+# 3. Geographic columns follow HIPAA Safe Harbor rules (state+ only)
+# 4. Person identifiers must only be used in COUNT(DISTINCT ...)
+# 5. Review OHDSI documentation for complete schema details

@@ -1,0 +1,263 @@
+# PHI Identifiers per HIPAA 45 CFR § 164.514(b)(2)
+#
+# This configuration defines the 18 categories of Protected Health Information
+# that must be removed for Safe Harbor de-identification.
+#
+# Reference: https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html
+
+# Category 1: Names
+# All names (patient, guarantor, relatives, etc.)
+direct_identifiers:
+  # Names
+  - patient_name
+  - first_name
+  - last_name
+  - middle_name
+  - given_name
+  - family_name
+  - full_name
+  - name
+  - maiden_name
+  - birth_name
+  - legal_name
+
+  # Category 7: Social Security Numbers
+  - ssn
+  - social_security_number
+  - social_security_no
+  - social_sec_num
+
+  # Category 8: Medical Record Numbers
+  - mrn
+  - medical_record_number
+  - medical_record_no
+  - patient_id  # Often used as MRN
+  - chart_number
+  - record_id
+
+  # Category 9: Health Plan Beneficiary Numbers
+  - health_plan_id
+  - beneficiary_id
+  - beneficiary_number
+  - subscriber_id
+  - subscriber_number
+  - member_id
+  - member_number
+  - insurance_id
+  - policy_number
+
+  # Category 10: Account Numbers
+  - account_number
+  - account_no
+  - account_id
+  - billing_account
+
+  # Category 11: Certificate/License Numbers
+  - certificate_number
+  - license_number
+  - driver_license
+  - drivers_license
+  - dl_number
+  - professional_license
+
+  # Category 4: Telephone Numbers
+  - phone
+  - telephone
+  - phone_number
+  - tel_no
+  - tel
+  - mobile
+  - cell_phone
+  - home_phone
+  - work_phone
+  - contact_number
+
+  # Category 5: Fax Numbers
+  - fax
+  - fax_number
+  - fax_no
+
+  # Category 6: Email Addresses
+  - email
+  - email_address
+  - email_addr
+  - e_mail
+
+  # Category 12: Vehicle Identifiers
+  - vehicle_id
+  - vin
+  - vehicle_identification_number
+  - license_plate
+  - plate_number
+
+  # Category 13: Device Identifiers and Serial Numbers
+  - device_id
+  - serial_number
+  - device_serial
+  - serial_no
+  - imei
+  - mac_address
+  - device_identifier
+
+  # Category 14: Web URLs
+  - url
+  - web_url
+  - website
+  - web_address
+  - uniform_resource_locator
+
+  # Category 15: IP Addresses
+  - ip_address
+  - ip_addr
+  - ip
+  - ipv4
+  - ipv6
+  - internet_protocol_address
+
+  # Category 16: Biometric Identifiers
+  - fingerprint
+  - retinal_scan
+  - retina_scan
+  - iris_scan
+  - biometric
+  - biometric_id
+  - facial_image
+  - face_photo
+  - photograph
+  - voiceprint
+  - voice_print
+
+  # Category 18: Any Other Unique Identifying Number/Code
+  - patient_key
+  - unique_id
+  - unique_identifier
+  - guid
+  - uuid
+  - token
+  - external_id
+
+# Category 2: Geographic Subdivisions Smaller Than State
+# All geographic elements smaller than state, including:
+# - Street addresses
+# - City, town, village
+# - County, precinct
+# - ZIP codes (except first 3 digits for populations >20,000)
+geographic_prohibited:
+  # Address components
+  - street_address
+  - address
+  - address_line_1
+  - address_line_2
+  - address_1
+  - address_2
+  - street
+  - street_name
+  - street_number
+  - apt
+  - apartment
+  - unit
+  - suite
+  - building
+  - po_box
+
+  # City/Town
+  - city
+  - town
+  - village
+  - municipality
+
+  # County
+  - county
+  - parish
+  - borough
+
+  # ZIP/Postal codes
+  - zip
+  - zip_code
+  - zipcode
+  - postal_code
+  - zip_5
+  - zip_9
+  - full_zip
+
+  # Coordinates
+  - latitude
+  - longitude
+  - lat
+  - lon
+  - geocode
+  - geolocation
+  - coordinates
+
+# Allowed geographic elements (state and larger)
+geographic_allowed:
+  - state
+  - state_code
+  - state_abbr
+  - region
+  - division
+  - country
+  - country_code
+  - zip_3  # First 3 digits only, if population >20,000
+
+# Category 3: Dates (except year)
+# All dates directly related to an individual, except year.
+# For individuals 90 years or older, all ages/dates must be aggregated to 90+
+date_prohibited:
+  # Birth dates
+  - birth_date
+  - birthdate
+  - date_of_birth
+  - dob
+  - birth_datetime
+  - month_of_birth
+  - day_of_birth
+
+  # Death dates
+  - death_date
+  - date_of_death
+  - death_datetime
+  - deceased_date
+
+  # Healthcare dates
+  - admission_date
+  - discharge_date
+  - visit_date
+  - encounter_date
+  - service_date
+  - procedure_date
+  - diagnosis_date
+  - lab_date
+  - test_date
+  - result_date
+
+  # Date components (except year)
+  - month
+  - day
+  - day_of_month
+  - day_of_week
+  - week
+  - quarter
+
+  # Timestamps
+  - timestamp
+  - datetime
+  - created_at
+  - updated_at
+  - modified_date
+
+# Allowed date elements
+date_allowed:
+  - year
+  - year_of_birth
+  - year_of_death
+  - birth_year
+  - death_year
+  - age_in_years  # If <90
+
+# Notes:
+# 1. All pattern matching is case-insensitive
+# 2. Underscores and hyphens are interchangeable in matching
+# 3. This list should be reviewed and updated regularly
+# 4. Custom column names may require configuration updates
+# 5. Age >89 years must be aggregated to "90+" category
