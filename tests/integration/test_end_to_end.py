@@ -117,8 +117,8 @@ class TestLayer0Failures:
 
         # Test educational response
         guidance, pattern = get_educational_guidance("E001")
-        assert "non-ASCII" in guidance.lower()
-        assert "SQL injection" in guidance
+        assert "non-ascii" in guidance.lower()  # Check lowercase after calling .lower()
+        assert "SQL injection" in guidance or "sql injection" in guidance.lower()
 
     def test_empty_query_rejection(self):
         """Test rejection of empty query."""

@@ -251,30 +251,72 @@ class PHIValidator:
         if re.search(r'\bSELECT\s+\*\s+FROM\b', statement_upper):
             raise SelectStarError()
 
-        # Track which clause we're in
-        current_clause = None
+        # Track which clause we're in - start with SELECT as default for first identifiers
+        current_clause = "SELECT"
 
         for token in statement.tokens:
+            # Skip whitespace and punctuation
+            if token.is_whitespace or token.ttype is sqlparse.tokens.Punctuation:
+                continue
+
             # Track SQL clauses
             if token.ttype is Keyword:
                 keyword = token.value.upper()
-                if keyword in ("SELECT", "WHERE", "GROUP BY", "ORDER BY", "JOIN", "ON"):
-                    current_clause = keyword
+                if keyword == "SELECT":
+                    current_clause = "SELECT"
+                elif keyword == "FROM":
+                    current_clause = "FROM"
+                elif keyword == "WHERE":
+                    current_clause = "WHERE"
+                elif keyword == "GROUP":
+                    current_clause = "GROUP BY"
+                elif keyword == "ORDER":
+                    current_clause = "ORDER BY"
+                elif keyword in ("JOIN", "INNER", "LEFT", "RIGHT", "OUTER"):
+                    current_clause = "JOIN"
+                elif keyword == "ON":
+                    current_clause = "ON"
 
             # Check for SELECT * (token-based)
-            if token.ttype is Wildcard and current_clause == "SELECT":
+            if token.ttype is Wildcard:
                 raise SelectStarError()
 
-            # Also check if token value is "*" when in SELECT
-            if current_clause == "SELECT" and str(token).strip() == "*":
+            # Also check if token value is "*" and not whitespace
+            if str(token).strip() == "*" and not token.is_whitespace:
                 raise SelectStarError()
 
+            # Check for WHERE/HAVING clauses (sqlparse packages these as objects)
+            if isinstance(token, sqlparse.sql.Where):
+                self._check_tokens_for_identifiers(token.tokens, "WHERE")
             # Check identifiers (column names)
-            if isinstance(token, Identifier):
-                self._check_identifier(token, current_clause or "UNKNOWN")
+            elif isinstance(token, Identifier):
+                self._check_identifier(token, current_clause)
             elif isinstance(token, IdentifierList):
                 for identifier in token.get_identifiers():
-                    self._check_identifier(identifier, current_clause or "UNKNOWN")
+                    self._check_identifier(identifier, current_clause)
+            # Also recursively check other complex tokens in WHERE/ON/HAVING context
+            elif hasattr(token, 'tokens') and current_clause in ("WHERE", "ON", "HAVING"):
+                # Recursively check sub-tokens in WHERE/ON/HAVING clauses
+                self._check_tokens_for_identifiers(token.tokens, current_clause)
+
+    def _check_tokens_for_identifiers(self, tokens: list, clause: str) -> None:
+        """Recursively check tokens for identifiers (for WHERE/ON/HAVING clauses).
+
+        Args:
+            tokens: List of tokens to check
+            clause: SQL clause context
+        """
+        for token in tokens:
+            if isinstance(token, Identifier):
+                self._check_identifier(token, clause)
+            elif isinstance(token, IdentifierList):
+                for identifier in token.get_identifiers():
+                    # Only check if it's actually an Identifier, not a bare Token
+                    if isinstance(identifier, Identifier):
+                        self._check_identifier(identifier, clause)
+            elif hasattr(token, 'tokens'):
+                # Recursively check nested tokens
+                self._check_tokens_for_identifiers(token.tokens, clause)
 
     def _check_identifier(self, identifier: Identifier, clause: str) -> None:
         """Check if an identifier is a PHI column.

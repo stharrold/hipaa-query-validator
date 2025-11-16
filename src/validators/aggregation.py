@@ -29,9 +29,12 @@ from ..models import ValidationResult
 
 # Required patient count pattern (exact match)
 # Accepts: person_id, p.person_id, person.person_id, etc.
-REQUIRED_PATIENT_COUNT_PATTERN = re.compile(
-    r"COUNT\s*\(\s*DISTINCT\s+(?:\w+\.)?person_id\s*\)\s+AS\s+Count_Patients", re.IGNORECASE
+# Note: SQL keywords are case-insensitive, but alias must be exactly "Count_Patients"
+REQUIRED_PATIENT_COUNT_PATTERN_KEYWORDS = re.compile(
+    r"COUNT\s*\(\s*DISTINCT\s+(?:\w+\.)?person_id\s*\)\s+AS\s+(\w+)", re.IGNORECASE
 )
+# Exact alias match (case-sensitive)
+REQUIRED_ALIAS = "Count_Patients"
 
 # Aggregate functions to detect
 AGGREGATE_FUNCTIONS = {"COUNT", "SUM", "AVG", "MIN", "MAX", "STDDEV", "VARIANCE"}
@@ -45,6 +48,7 @@ class AggregationValidator:
         self.has_group_by = False
         self.has_patient_count = False
         self.select_aggregates: List[str] = []
+        self.select_regular_columns: List[str] = []  # Non-aggregate columns in SELECT
         self.non_select_aggregates: List[Tuple[str, str]] = []  # (function, clause)
         self.group_by_columns: List[str] = []
 
@@ -68,6 +72,7 @@ class AggregationValidator:
         self.has_group_by = False
         self.has_patient_count = False
         self.select_aggregates = []
+        self.select_regular_columns = []
         self.non_select_aggregates = []
         self.group_by_columns = []
 
@@ -117,7 +122,8 @@ class AggregationValidator:
         """
         # Check for GROUP BY in the flattened token string (more reliable)
         statement_str = str(statement).upper()
-        if "GROUP BY" in statement_str or "GROUP  BY" in statement_str:
+        # Use regex to handle any amount of whitespace between GROUP and BY
+        if re.search(r'GROUP\s+BY', statement_str):
             self.has_group_by = True
 
         current_clause = None
@@ -127,8 +133,8 @@ class AggregationValidator:
             if token.is_whitespace or token.ttype is sqlparse.tokens.Punctuation:
                 continue
 
-            # Track which clause we're in
-            if token.ttype is Keyword:
+            # Track which clause we're in (check if token is a keyword)
+            if token.ttype is not None and token.ttype in sqlparse.tokens.Keyword:
                 keyword = token.value.upper()
                 if keyword == "SELECT":
                     current_clause = "SELECT"
@@ -152,10 +158,40 @@ class AggregationValidator:
                 for item in token.get_identifiers():
                     if isinstance(item, Function):
                         self._check_function(item, current_clause or "UNKNOWN")
+                    elif isinstance(item, Identifier):
+                        # Check if this identifier contains a function (aliased aggregate)
+                        has_function = False
+                        if hasattr(item, 'tokens'):
+                            for subtoken in item.tokens:
+                                if isinstance(subtoken, Function):
+                                    self._check_function(subtoken, current_clause or "UNKNOWN")
+                                    has_function = True
+                                    break
+                        if current_clause == "SELECT" and not has_function:
+                            # Regular column in SELECT (not an aggregate)
+                            self.select_regular_columns.append(str(item).strip())
+                        elif current_clause == "GROUP BY":
+                            self.group_by_columns.append(str(item).strip())
+                    elif current_clause == "SELECT":
+                        # Other token types in SELECT (shouldn't happen often)
+                        self.select_regular_columns.append(str(item).strip())
                     elif current_clause == "GROUP BY":
                         self.group_by_columns.append(str(item).strip())
-            elif isinstance(token, Identifier) and current_clause == "GROUP BY":
-                self.group_by_columns.append(str(token).strip())
+            elif isinstance(token, Identifier):
+                if current_clause == "SELECT":
+                    # Check if this identifier contains a function (aliased aggregate)
+                    has_function = False
+                    if hasattr(token, 'tokens'):
+                        for subtoken in token.tokens:
+                            if isinstance(subtoken, Function):
+                                self._check_function(subtoken, current_clause)
+                                has_function = True
+                                break
+                    # Only add to regular columns if it's not a function
+                    if not has_function:
+                        self.select_regular_columns.append(str(token).strip())
+                elif current_clause == "GROUP BY":
+                    self.group_by_columns.append(str(token).strip())
 
     def _check_function(self, func: Function, clause: str) -> None:
         """Check if a function is an aggregate and in which clause.
@@ -190,17 +226,22 @@ class AggregationValidator:
         # Normalize whitespace for matching
         normalized_query = " ".join(query.split())
 
-        # Check for exact pattern match
-        match = REQUIRED_PATIENT_COUNT_PATTERN.search(normalized_query)
+        # Check for pattern match with keywords (case-insensitive)
+        match = REQUIRED_PATIENT_COUNT_PATTERN_KEYWORDS.search(normalized_query)
         if match:
-            self.has_patient_count = True
-            return True
+            # Check if alias is exactly "Count_Patients" (case-sensitive)
+            alias = match.group(1)
+            if alias == REQUIRED_ALIAS:
+                self.has_patient_count = True
+                return True
+            else:
+                # Correct syntax but wrong alias case
+                raise InvalidPatientCountSyntaxError(found_syntax=match.group(0))
 
         # Check if there's an incorrect patient count syntax
         count_patterns = [
             r"COUNT\s*\(\s*person_id\s*\)",  # Missing DISTINCT
-            r"COUNT\s*\(\s*DISTINCT\s+person_id\s*\)",  # Missing AS Count_Patients
-            r"COUNT\s*\(\s*DISTINCT\s+person_id\s*\)\s+AS\s+\w+",  # Wrong alias
+            r"COUNT\s*\(\s*DISTINCT\s+(?:\w+\.)?person_id\s*\)",  # Missing AS
         ]
 
         for pattern in count_patterns:
@@ -215,14 +256,19 @@ class AggregationValidator:
         """Check if this is a global aggregate query (no GROUP BY needed).
 
         A global aggregate query is one that aggregates across the entire
-        dataset without grouping by any dimensions.
+        dataset without grouping by any dimensions. It should ONLY have
+        aggregate functions in SELECT, not regular columns.
 
         Returns:
             True if this is a global aggregate, False otherwise
         """
-        # Global aggregate if we have aggregates (including patient count) but no GROUP BY
+        # Global aggregate if:
+        # 1. We have aggregates (including patient count)
+        # 2. No GROUP BY clause
+        # 3. NO regular (non-aggregate) columns in SELECT
         has_aggregates = len(self.select_aggregates) > 0 or self.has_patient_count
-        return has_aggregates and not self.has_group_by
+        has_no_regular_columns = len(self.select_regular_columns) == 0
+        return has_aggregates and not self.has_group_by and has_no_regular_columns
 
 
 def validate_aggregation(query: str, request_id: str) -> ValidationResult:
@@ -256,6 +302,17 @@ def extract_group_by_columns(query: str) -> List[str]:
     for statement in parsed:
         validator._analyze_statement(statement)
 
+    # If token-based extraction didn't work, try regex fallback
+    if not validator.group_by_columns:
+        # Extract GROUP BY columns using regex
+        match = re.search(r'GROUP\s+BY\s+([^;]+?)(?:$|ORDER|HAVING|LIMIT)',
+                         query, re.IGNORECASE | re.DOTALL)
+        if match:
+            group_by_clause = match.group(1).strip()
+            # Split by comma and clean up
+            columns = [col.strip() for col in group_by_clause.split(',')]
+            return columns
+
     return validator.group_by_columns
 
 
@@ -269,4 +326,9 @@ def has_required_patient_count(query: str) -> bool:
         True if required patient count present, False otherwise
     """
     normalized_query = " ".join(query.split())
-    return bool(REQUIRED_PATIENT_COUNT_PATTERN.search(normalized_query))
+    match = REQUIRED_PATIENT_COUNT_PATTERN_KEYWORDS.search(normalized_query)
+    if match:
+        # Check if alias is exactly "Count_Patients" (case-sensitive)
+        alias = match.group(1)
+        return alias == REQUIRED_ALIAS
+    return False

@@ -120,7 +120,7 @@ class SQLEnforcer:
         Returns:
             True if subquery found, False otherwise
         """
-        # Count SELECT keywords - if more than 1, there's a subquery
+        # Method 1: Count SELECT keywords - if more than 1, there's a subquery
         select_count = 0
 
         def count_selects(tokens):
@@ -134,8 +134,17 @@ class SQLEnforcer:
 
         count_selects(statement.tokens)
 
-        # More than one SELECT means there's a subquery
-        return select_count > 1
+        if select_count > 1:
+            return True
+
+        # Method 2: Check for parenthesized subqueries using regex
+        import re
+        statement_str = str(statement).upper()
+        # Look for SELECT inside parentheses (subquery pattern)
+        if re.search(r'\(\s*SELECT\s', statement_str):
+            return True
+
+        return False
 
     def wrap_query(self, query: str) -> str:
         """Wrap validated query with minimum patient count enforcement.

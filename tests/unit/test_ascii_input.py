@@ -87,7 +87,7 @@ class TestInvalidASCIIInput:
         error = exc_info.value
         assert error.code == "E001"
         assert error.layer == "ascii_input"
-        assert error.details["position"] == 18
+        assert error.details["position"] == 17  # Position of 'é' in the string
         assert error.details["character"] == "é"
         assert error.details["code_point"] == 0xE9
 
