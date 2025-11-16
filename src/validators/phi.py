@@ -335,6 +335,11 @@ class PHIValidator:
         Args:
             token: Token to check for PHI patterns
             clause: SQL clause context
+
+        Raises:
+            DirectPHIIdentifierError: If a direct PHI identifier is detected.
+            GeographicPHIError: If a geographic PHI identifier is detected.
+            DatePHIError: If a date PHI identifier is detected.
         """
         # Skip if no value or is whitespace/punctuation
         if not hasattr(token, "value"):
