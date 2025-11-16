@@ -100,7 +100,7 @@ class TestInvalidASCIIInput:
 
         error = exc_info.value
         assert error.code == "E001"
-        assert "Fran" in query[:error.details["position"]]
+        assert "Fran" in query[: error.details["position"]]
 
     def test_unicode_quote_character(self):
         """Test rejection of Unicode quote character."""

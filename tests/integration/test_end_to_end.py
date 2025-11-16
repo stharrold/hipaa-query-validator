@@ -150,11 +150,7 @@ class TestLayer2Failures:
         assert error.code == "E204"
 
         # Test educational response
-        response = format_educational_response(
-            error.code,
-            error.message,
-            error.details
-        )
+        response = format_educational_response(error.code, error.message, error.details)
         assert "explicit" in response["educational_guidance"].lower()
         assert "SELECT" in response["correct_pattern"]
 
@@ -265,8 +261,20 @@ class TestEducationalResponses:
 
     def test_all_error_codes_have_guidance(self):
         """Test that all implemented error codes have educational guidance."""
-        error_codes = ["E001", "E002", "E003", "E201", "E202", "E203", "E204",
-                       "E301", "E302", "E303", "E401", "E402"]
+        error_codes = [
+            "E001",
+            "E002",
+            "E003",
+            "E201",
+            "E202",
+            "E203",
+            "E204",
+            "E301",
+            "E302",
+            "E303",
+            "E401",
+            "E402",
+        ]
 
         for code in error_codes:
             guidance, pattern = get_educational_guidance(code)
@@ -279,9 +287,7 @@ class TestEducationalResponses:
     def test_educational_response_format(self):
         """Test format of educational responses."""
         response = format_educational_response(
-            "E201",
-            "Direct PHI identifier detected",
-            {"column_name": "patient_name"}
+            "E201", "Direct PHI identifier detected", {"column_name": "patient_name"}
         )
 
         assert "error_code" in response
