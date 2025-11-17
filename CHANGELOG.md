@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2025-11-17
+
+### Documentation
+- Added comprehensive Release Workflow section to CLAUDE.md (#49)
+  - Documented branch strategy (main, develop, contrib/*, release/*)
+  - Added 7-step release process with commands
+  - Included semantic versioning guidelines
+  - Provides repeatable release workflow for future releases
+- Updated CLAUDE.md version reference from v1.0.0 to v1.2.0
+- Made OMOP schema documentation version-agnostic
+
 ## [1.2.0] - 2025-11-17
 
 ### Added
@@ -72,7 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - HIPAA Safe Harbor compliance enforcement
 - Educational error messaging system
 
-[Unreleased]: https://github.com/stharrold/hipaa-query-validator/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/stharrold/hipaa-query-validator/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/stharrold/hipaa-query-validator/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/stharrold/hipaa-query-validator/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/stharrold/hipaa-query-validator/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/stharrold/hipaa-query-validator/releases/tag/v1.1.0
