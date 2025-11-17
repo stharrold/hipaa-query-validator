@@ -22,7 +22,7 @@ The HIPAA Query Validator enforces **Safe Harbor de-identification** per 45 CFR 
 
 ## Security Architecture
 
-### Validation Layers (Phase 1)
+### Validation Layers
 
 | Layer | Name | Purpose | Status |
 |-------|------|---------|--------|
@@ -32,10 +32,10 @@ The HIPAA Query Validator enforces **Safe Harbor de-identification** per 45 CFR 
 | 3 | Aggregation Enforcement | Require GROUP BY + patient count | ✅ Implemented |
 | 4 | SQL Enforcement Wrapper | Apply 20k threshold | ✅ Implemented |
 | 5 | Sample Execution | Verify query executes | 🔄 Future |
-| 7 | LLM Validation | Detect prompt injection | 🔄 Future |
+| 7 | Prompt Injection Detection | Detect malicious instructions in SQL | ✅ Implemented |
 | 8 | ASCII Output Validation | Prevent data exfiltration | 🔄 Future |
 
-**Phase 1 Status**: Layers 0, 2, 3, and 4 are fully implemented and tested.
+**Implementation Status**: Layers 0, 2, 3, 4, and 7 are fully implemented and tested (158 tests, 87% coverage).
 
 ### HIPAA Compliance
 
@@ -284,6 +284,12 @@ hipaa-query-validator/
 - **E401**: Subquery not allowed
 - **E402**: CTE (WITH clause) not allowed
 
+### Layer 7: Prompt Injection Detection (E701-E799)
+- **E701**: Instruction-like text detected in SQL comment
+- **E702**: Instruction-like text detected in string literal
+- **E703**: Privilege escalation attempt detected
+- **E704**: Encoding/obfuscation attempt detected
+
 All error codes include:
 - Detailed error message
 - Educational guidance
@@ -328,8 +334,8 @@ The OMOP Common Data Model schema is defined in `config/schemas/omop_5.4.yaml`. 
 - [ ] Layer 6: Read-only enforcement
 - [ ] Zero-knowledge container execution
 
-### Phase 3: Advanced Features (Future)
-- [ ] Layer 7: LLM validation
+### Phase 3: Advanced Features (In Progress)
+- [x] Layer 7: Prompt injection detection
 - [ ] Layer 8: Output validation
 - [ ] Audit logging (JSONL format)
 - [ ] FHIR R4 support

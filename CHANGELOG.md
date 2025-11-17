@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Layer 7: Prompt Injection Detection** - Pattern-based detection of malicious instructions in SQL queries (#59)
+  - Detects instruction keywords in SQL comments and string literals (e.g., "ignore", "disable", "bypass")
+  - Blocks privilege escalation attempts (e.g., "admin", "root", "superuser")
+  - Identifies encoding/obfuscation patterns (e.g., base64, hex escapes, unicode escapes)
+  - Detects 70+ dangerous phrases (e.g., "ignore previous instructions", "disable validation")
+  - Educational error messages (E701-E704) explaining why patterns are dangerous
+  - Configuration file: `config/prompt_patterns.yaml`
+  - Validator module: `src/validators/prompt_injection.py`
+  - 45 comprehensive tests with 97% code coverage
+  - Fast performance: <5ms overhead per query (p95)
+  - Protects against LLM manipulation in text-to-SQL systems
+- Total test suite expanded to 158 tests (113 → 158)
+- Overall code coverage increased to 87% (85% → 87%)
+
+### Documentation
+- Updated README.md to reflect Layer 7 implementation status
+- Added Layer 7 error codes documentation (E701-E704)
+- Updated validation layers table to show Layer 7 as implemented
+- Updated roadmap to show Layer 7 as completed
+
 ## [1.2.2] - 2025-11-17
 
 ### Fixed

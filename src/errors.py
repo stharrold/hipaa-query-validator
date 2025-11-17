@@ -294,6 +294,113 @@ class CTENotAllowedError(EnforcementError):
         super().__init__("E402", message, {})
 
 
+# Layer 7: Prompt Injection Detection Errors (E701-E799)
+
+
+class PromptInjectionError(ValidationError):
+    """Base class for prompt injection detection errors."""
+
+    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
+        """Initialize prompt injection error."""
+        super().__init__(code, message, "prompt_injection", details)
+
+
+class InstructionInCommentError(PromptInjectionError):
+    """Error E701: Instruction-like text detected in SQL comment."""
+
+    def __init__(self, comment: str, pattern: str) -> None:
+        """Initialize instruction in comment error.
+
+        Args:
+            comment: The comment text containing the instruction
+            pattern: The suspicious pattern that was detected
+        """
+        # Truncate long comments for display
+        display_comment = comment[:100] + "..." if len(comment) > 100 else comment
+        message = (
+            f"Instruction-like text detected in SQL comment.\n\n"
+            f"Detected pattern: '{pattern}'\n"
+            f"In comment: {display_comment}\n\n"
+            f"SQL comments should only explain query logic, not contain instructions or commands.\n\n"
+            f"Examples of acceptable comments:\n"
+            f"  /* Join to person table for patient demographics */\n"
+            f"  -- Filter by year of birth for age calculation\n\n"
+            f"Please remove any instruction-like text from comments."
+        )
+        details = {"comment": comment, "pattern": pattern}
+        super().__init__("E701", message, details)
+
+
+class InstructionInStringError(PromptInjectionError):
+    """Error E702: Instruction-like text detected in string literal."""
+
+    def __init__(self, string: str, pattern: str) -> None:
+        """Initialize instruction in string error.
+
+        Args:
+            string: The string literal containing the instruction
+            pattern: The suspicious pattern that was detected
+        """
+        # Truncate long strings for display
+        display_string = string[:100] + "..." if len(string) > 100 else string
+        message = (
+            f"Instruction-like text detected in string literal.\n\n"
+            f"Detected pattern: '{pattern}'\n"
+            f"In string: {display_string}\n\n"
+            f"String literals should contain data values only, not instructions.\n\n"
+            f"Please remove any instruction-like text from string values."
+        )
+        details = {"string": string, "pattern": pattern}
+        super().__init__("E702", message, details)
+
+
+class PrivilegeEscalationError(PromptInjectionError):
+    """Error E703: Privilege escalation attempt detected."""
+
+    def __init__(self, text: str, keyword: str) -> None:
+        """Initialize privilege escalation error.
+
+        Args:
+            text: The text containing the privilege keyword
+            keyword: The privilege escalation keyword detected
+        """
+        # Truncate long text for display
+        display_text = text[:100] + "..." if len(text) > 100 else text
+        message = (
+            f"Privilege escalation attempt detected.\n\n"
+            f"Detected keyword: '{keyword}'\n"
+            f"In text: {display_text}\n\n"
+            f"References to privileged roles (admin, root, superuser) are not allowed "
+            f"in SQL queries as they may indicate an attempt to bypass security."
+        )
+        details = {"text": text, "keyword": keyword}
+        super().__init__("E703", message, details)
+
+
+class ObfuscationDetectedError(PromptInjectionError):
+    """Error E704: Encoding/obfuscation attempt detected."""
+
+    def __init__(self, text: str, pattern: str) -> None:
+        """Initialize obfuscation detected error.
+
+        Args:
+            text: The text containing the obfuscation
+            pattern: The obfuscation pattern detected
+        """
+        # Truncate long text for display
+        display_text = text[:100] + "..." if len(text) > 100 else text
+        message = (
+            f"Encoding or obfuscation detected.\n\n"
+            f"Detected pattern: {pattern}\n"
+            f"In text: {display_text}\n\n"
+            f"Use of encoding (base64, hex, unicode escapes) in SQL queries "
+            f"is not allowed as it may be used to obfuscate malicious content.\n\n"
+            f"Please use plain ASCII text only."
+        )
+        details = {"text": text, "pattern": pattern}
+        super().__init__("E704", message, details)
+
+
 # Layer 1: Schema Validation Errors (E101-E199)
 
 

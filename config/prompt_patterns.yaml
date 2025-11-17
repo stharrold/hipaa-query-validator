@@ -1,0 +1,102 @@
+# Prompt Injection Detection Patterns
+# Layer 7: Detects instruction-like text in SQL comments and string literals
+# that could be used to manipulate LLM-based query systems.
+
+prompt_injection:
+  # Instruction keywords that should not appear in SQL
+  instruction_keywords:
+    - "ignore"
+    - "disable"
+    - "override"
+    - "bypass"
+    - "skip"
+    - "act as"
+    - "pretend"
+    - "you are"
+    - "system message"
+    - "system prompt"
+    - "new instructions"
+    - "disregard"
+    - "forget"
+    - "instead"
+    - "however"
+    - "actually"
+    - "really"
+    - "always"
+    - "never"
+    - "must"
+    - "should"
+    - "will"
+    - "execute"
+    - "run"
+    - "perform"
+
+  # Privilege escalation keywords
+  privilege_keywords:
+    - "admin"
+    - "administrator"
+    - "root"
+    - "superuser"
+    - "elevated"
+    - "privileged"
+    - "sudo"
+    - "grant"
+    - "revoke"
+    - "permission"
+    - "access"
+
+  # Dangerous command phrases (multi-word patterns)
+  dangerous_phrases:
+    - "ignore previous instructions"
+    - "ignore all previous"
+    - "ignore the above"
+    - "ignore preceding"
+    - "disregard previous"
+    - "disregard all previous"
+    - "disregard rules"
+    - "disable validation"
+    - "disable security"
+    - "bypass security"
+    - "bypass validation"
+    - "override phi"
+    - "override rules"
+    - "skip validation"
+    - "skip checks"
+    - "return all"
+    - "show everything"
+    - "reveal data"
+    - "expose phi"
+    - "expose data"
+    - "grant access"
+    - "give access"
+    - "provide access"
+    - "you must"
+    - "you should"
+    - "you will"
+    - "act as if"
+    - "pretend to be"
+    - "behave as"
+    - "from now on"
+    - "new role"
+    - "new task"
+    - "forget everything"
+    - "forget previous"
+    - "start over"
+    - "reset context"
+
+  # Encoding/obfuscation patterns (regex)
+  encoding_patterns:
+    - "base64"
+    - "hex"
+    - "unicode"
+    - "\\\\x[0-9a-fA-F]{2}"  # Hex escape sequences like \x41
+    - "\\\\u[0-9a-fA-F]{4}"  # Unicode escape sequences like \u0041
+    - "\\\\[0-9]{3}"         # Octal escape sequences like \101
+    - "eval"
+    - "exec"
+    - "decode"
+    - "encode"
+
+  # Configuration
+  case_sensitive: false
+  min_phrase_length: 10  # Minimum length for dangerous phrases to reduce false positives
