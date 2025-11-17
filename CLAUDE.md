@@ -122,10 +122,62 @@ PHI identifiers are defined in `config/schemas/phi_identifiers.yaml`. When addin
 3. Run full test suite to ensure no false positives
 4. Consider HIPAA compliance implications
 
+### Issue Closure Protocol
+
+**CRITICAL**: Before closing ANY GitHub issue, complete this 5-point verification checklist:
+
+**1. Linked Pull Request**
+- [ ] PR is linked to the issue (#PR_NUMBER in issue description or comment)
+- [ ] PR is merged to main branch
+- [ ] Closing comment includes: `Closes #ISSUE via PR #NUMBER`
+
+**2. Test Requirements**
+- [ ] Run: `pytest` (all 114 tests pass)
+- [ ] Run: `pytest --cov=src` (coverage ≥85%)
+- [ ] No test failures or skipped tests
+- [ ] New code has ≥95% line coverage
+
+**3. Code Review**
+- [ ] PR has at least one approval
+- [ ] All review comments addressed
+- [ ] Security/HIPAA review completed (if applicable)
+
+**4. Documentation Updates**
+- [ ] CHANGELOG.md updated with issue reference
+- [ ] README.md sections reviewed and updated (if applicable)
+- [ ] CLAUDE.md sections reviewed and updated (if applicable)
+- [ ] Code comments and docstrings added
+
+**5. Functional Verification**
+- [ ] Original issue reproduced and verified fixed
+- [ ] No regressions introduced
+- [ ] HIPAA compliance maintained (for validator changes)
+
+**Closure Comment Template:**
+```markdown
+## Closure Summary
+
+### What Was Fixed
+[Brief description of the fix]
+
+### Verification Completed
+- Tests: All 114 tests pass with 85%+ coverage
+- Review: Approved by @reviewer_name
+- Docs: CHANGELOG.md and [other docs] updated
+- Functional: Tested with [describe scenario]
+
+Closes #ISSUE via PR #NUMBER
+```
+
+**Quality Gates:**
+- Healthcare software requires high standards
+- HIPAA audit trail requires traceability
+- Closure without verification risks compliance violations
+
 ## Testing Requirements
 
 **Critical Constraints:**
-- Maintain 100% test pass rate (110/110 tests)
+- Maintain 100% test pass rate (114/114 tests)
 - Maintain >=85% code coverage
 - No breaking changes to existing functionality
 - Test after EACH code change
@@ -133,9 +185,9 @@ PHI identifiers are defined in `config/schemas/phi_identifiers.yaml`. When addin
 **Test Organization:**
 ```
 tests/
-├── unit/                    # Isolated component tests (95 tests)
+├── unit/                    # Isolated component tests (97 tests)
 │   ├── test_ascii_input.py  # 29 ASCII validation tests
-│   ├── test_phi.py          # 38 PHI validation tests
+│   ├── test_phi.py          # 40 PHI validation tests
 │   └── test_aggregation.py  # 28 aggregation tests
 └── integration/             # End-to-end workflows (17 tests)
     └── test_end_to_end.py   # Full validation pipeline
