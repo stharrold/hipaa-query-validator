@@ -97,6 +97,182 @@ cp config/validator.yaml.example config/validator.yaml
 nano config/validator.yaml
 ```
 
+## Container-Based Execution
+
+For production deployments, use the container-based execution environment for enhanced security and isolation.
+
+### Features
+
+- **Ephemeral Containers**: One container per query, automatically destroyed after execution
+- **Zero-Knowledge Security**: Credentials encrypted in-transit, decrypted in-memory only
+- **Network Isolation**: Containers run with `--network=none`
+- **Read-Only Filesystem**: Prevents unauthorized file writes
+- **Non-Root Execution**: Containers run as unprivileged user
+- **Resource Limits**: CPU, memory, and process limits enforced
+- **Automatic Cleanup**: Secure memory clearing before container destruction
+
+### Prerequisites
+
+Install Podman (rootless container runtime):
+
+```bash
+# macOS
+brew install podman
+
+# Linux (Debian/Ubuntu)
+sudo apt install podman
+
+# Linux (Fedora/RHEL)
+sudo dnf install podman
+
+# Verify installation
+podman --version
+```
+
+### Build Container Image
+
+```bash
+# Build the container image
+podman build -t hipaa-validator:latest -f container/Containerfile .
+
+# Verify image
+podman images | grep hipaa-validator
+```
+
+### Usage
+
+```python
+from src.container.runner import ContainerExecutor
+from cryptography.fernet import Fernet
+
+# Generate encryption key (store securely in production - use KMS)
+encryption_key = Fernet.generate_key()
+
+# Create executor
+executor = ContainerExecutor(
+    image="hipaa-validator:latest",
+    audit_log_dir="/var/log/hipaa_validator",  # Optional
+    timeout_seconds=300
+)
+
+# Database credentials (will be encrypted)
+db_credentials = {
+    "host": "db.example.com",
+    "port": "5432",
+    "database": "omop",
+    "username": "analytics_user",
+    "password": "secure_password"
+}
+
+# Execute query in isolated container
+query = """
+SELECT gender_concept_id,
+       COUNT(DISTINCT person_id) AS Count_Patients
+FROM person
+GROUP BY gender_concept_id
+"""
+
+result = executor.execute_query(
+    query=query,
+    db_credentials=db_credentials,
+    encryption_key=encryption_key
+)
+
+# Handle result
+if result["status"] == "valid":
+    print(f"Query validated successfully!")
+    print(f"Wrapped query:\n{result['wrapped_query']}")
+elif result["status"] == "invalid":
+    print(f"Validation failed at layer: {result['layer']}")
+    print(f"Error: {result['error']}")
+else:
+    print(f"Error: {result['message']}")
+```
+
+### Validation-Only Mode
+
+For validation without database execution (credentials optional):
+
+```python
+executor = ContainerExecutor(image="hipaa-validator:latest")
+
+result = executor.execute_query(query=query)
+
+if result["status"] == "valid":
+    print("Query is HIPAA-compliant!")
+```
+
+### Security Architecture
+
+Each query execution:
+
+1. **Encryption**: Credentials encrypted using Fernet (symmetric encryption)
+2. **Container Creation**: New isolated container with security hardening
+3. **In-Memory Decryption**: Credentials decrypted inside container only
+4. **Validation**: Query validated through all layers
+5. **Secure Cleanup**: Memory cleared, environment variables wiped
+6. **Auto-Destruction**: Container automatically deleted (--rm flag)
+
+**Security Features Applied:**
+
+```bash
+--rm                          # Auto-delete container
+--network=none                # No network access
+--read-only                   # Read-only root filesystem
+--tmpfs /tmp:rw,size=100m     # Limited writable temp space
+--cap-drop=ALL                # Drop all Linux capabilities
+--security-opt=no-new-privileges
+--pids-limit=100              # Limit processes
+--memory=512m                 # Memory limit
+--cpus=1                      # CPU limit
+```
+
+### Testing Container Execution
+
+```bash
+# Run container integration tests
+uv run pytest tests/integration/test_container_lifecycle.py -v
+
+# Test specific security feature
+uv run pytest tests/integration/test_container_lifecycle.py::TestSecurity -v
+
+# Build and test workflow
+podman build -t hipaa-validator:test -f container/Containerfile .
+uv run pytest tests/integration/test_container_lifecycle.py -v
+```
+
+### Production Deployment
+
+**Key Management:**
+- Store encryption keys in a Key Management Service (AWS KMS, Azure Key Vault, HashiCorp Vault)
+- Rotate keys regularly
+- Never commit keys to version control
+
+**Audit Logging:**
+- Mount audit log directory: `audit_log_dir="/var/log/hipaa_validator"`
+- Logs are written as JSONL for SIEM integration
+- Only query hashes logged, never full query text
+
+**Monitoring:**
+- Monitor container execution time
+- Alert on validation failures
+- Track resource usage
+
+**Example Production Configuration:**
+
+```python
+from src.container.runner import ContainerExecutor
+import os
+
+executor = ContainerExecutor(
+    image="hipaa-validator:1.0.0",  # Use versioned images
+    audit_log_dir=os.getenv("AUDIT_LOG_DIR"),
+    timeout_seconds=int(os.getenv("QUERY_TIMEOUT", "300")),
+    memory_limit="512m",
+    cpu_limit="1"
+)
+```
+
 ## Quick Start
 
 ### Basic Usage
@@ -322,11 +498,11 @@ The OMOP Common Data Model schema is defined in `config/schemas/omop_5.4.yaml`. 
 
 ## Roadmap
 
-### Phase 2: Execution & Security (Future)
+### Phase 2: Execution & Security (In Progress)
 - [ ] Layer 1: Schema validation
 - [ ] Layer 5: Sample execution
 - [ ] Layer 6: Read-only enforcement
-- [ ] Zero-knowledge container execution
+- [x] Zero-knowledge container execution ✅
 
 ### Phase 3: Advanced Features (Future)
 - [ ] Layer 7: LLM validation

@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+# Install dependencies
+WORKDIR /tmp
+COPY container/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt && rm requirements.txt
+
+# Copy application
+WORKDIR /app
+COPY src/ ./src/
+COPY config/ ./config/
+
+# Create non-root user
+RUN useradd -m -u 1000 validator && \
+    mkdir -p /app/audit_logs && \
+    chown -R validator:validator /app
+
+# Switch to non-root
+USER validator
+
+# Entrypoint
+ENTRYPOINT ["python", "-m", "src.container.executor"]
