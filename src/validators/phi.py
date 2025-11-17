@@ -480,9 +480,7 @@ class PHIValidator:
         return "unique identifier (Category 18)"
 
 
-def validate_phi(
-    query: str, request_id: str, config_path: Path | None = None
-) -> ValidationResult:
+def validate_phi(query: str, request_id: str, config_path: Path | None = None) -> ValidationResult:
     """Validate query for PHI columns (convenience function).
 
     Args:

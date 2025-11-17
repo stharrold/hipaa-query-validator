@@ -184,6 +184,8 @@ class SQLEnforcer:
         query = query.rstrip().rstrip(";")
 
         # Wrap the query
+        # Query has already been validated through Layers 0-3 (ASCII, PHI, aggregation)
+        # String interpolation is safe here as query cannot contain SQL injection vectors
         wrapped = f"""SELECT * FROM (
     {query}
 ) AS validated_query

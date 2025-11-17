@@ -6,7 +6,6 @@ the principle of "educate, don't auto-fix."
 """
 
 
-
 def get_educational_guidance(error_code: str) -> tuple[str, str | None]:
     """Get educational guidance and correct pattern for an error code.
 

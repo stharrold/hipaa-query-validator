@@ -6,7 +6,6 @@ guidance to help users understand and fix issues.
 """
 
 
-
 class ValidationError(Exception):
     """Base exception for all validation errors.
 
