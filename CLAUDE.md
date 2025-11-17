@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 HIPAA Query Validator is a production-ready SQL query validation system that enforces HIPAA Safe Harbor de-identification requirements (45 CFR § 164.514(b)(2)) through an 8-layer defense-in-depth security architecture. The system is designed for healthcare data analytics, ensuring queries cannot expose Protected Health Information (PHI) while enabling privacy-preserving aggregate analysis.
 
-**Current Status**: Phase 1 complete (v1.0.0) - Layers 0, 2, 3, 4 implemented with 114/114 tests passing and 85%+ coverage.
+**Current Status**: Phase 1 complete (v1.0.0) - Layers 0, 2, 3, 4 implemented with 113/113 tests passing and 85%+ coverage.
 
 **Python Requirements**: Python 3.11+ required (uses match statements, StrEnum, improved typing). CI tests on Python 3.11 and 3.12.
 
@@ -158,7 +158,7 @@ uv run black src tests && uv run mypy src && uv run ruff check src tests && uv r
 - [ ] Closing comment includes: `Closes #ISSUE via PR #NUMBER`
 
 **2. Test Requirements**
-- [ ] Run: `uv run pytest` (all 114 tests pass)
+- [ ] Run: `uv run pytest` (all 113 tests pass)
 - [ ] Run: `uv run pytest --cov=src` (coverage ≥85%)
 - [ ] No test failures or skipped tests
 - [ ] New code has ≥95% line coverage
@@ -187,7 +187,7 @@ uv run black src tests && uv run mypy src && uv run ruff check src tests && uv r
 [Brief description of the fix]
 
 ### Verification Completed
-- Tests: All 114 tests pass with 85%+ coverage
+- Tests: All 113 tests pass with 85%+ coverage
 - Review: Approved by @reviewer_name
 - Docs: CHANGELOG.md and [other docs] updated
 - Functional: Tested with [describe scenario]
@@ -203,7 +203,7 @@ Closes #ISSUE via PR #NUMBER
 ## Testing Requirements
 
 **Critical Constraints:**
-- Maintain 100% test pass rate (114/114 tests)
+- Maintain 100% test pass rate (113/113 tests)
 - Maintain >=85% code coverage
 - No breaking changes to existing functionality
 - Test after EACH code change
@@ -211,9 +211,9 @@ Closes #ISSUE via PR #NUMBER
 **Test Organization:**
 ```
 tests/
-├── unit/                    # Isolated component tests (97 tests)
+├── unit/                    # Isolated component tests (96 tests)
 │   ├── test_ascii_input.py  # 29 ASCII validation tests
-│   ├── test_phi.py          # 40 PHI validation tests
+│   ├── test_phi.py          # 39 PHI validation tests
 │   └── test_aggregation.py  # 28 aggregation tests
 └── integration/             # End-to-end workflows (17 tests)
     └── test_end_to_end.py   # Full validation pipeline
