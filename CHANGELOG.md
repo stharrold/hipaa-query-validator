@@ -26,8 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated test count in CLAUDE.md to reflect actual 39 PHI validation tests (#18)
 - Improved test docstring accuracy for PHI detection tests (#13, #19)
 - Added comprehensive docstring documentation with Raises sections (#16)
-- Implemented closure verification protocol for completed issues (#12)
-  - Created ISSUE_CLOSURE_PROTOCOL.md with comprehensive issue closure guidelines
+- Integrated issue closure protocol into CLAUDE.md for easier maintenance (#12, #31, #32)
+  - Consolidated verification checklist from standalone protocol document
+  - Ensures AI agents see closure guidance during development
 
 ### Testing
 - Added comprehensive test coverage for string literal handling
