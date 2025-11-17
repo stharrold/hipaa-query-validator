@@ -193,12 +193,13 @@ class SchemaValidator:
             if "." in table_name:
                 table_name = table_name.split(".")[-1]
 
-            self.tables_in_query.add(table_name)
+            # Store table name in lowercase for case-insensitive comparison
+            self.tables_in_query.add(table_name.lower())
 
-            # Store alias mapping if present
+            # Store alias mapping if present (both in lowercase)
             alias = identifier.get_alias()
             if alias:
-                self.table_aliases[alias] = table_name
+                self.table_aliases[alias.lower()] = table_name.lower()
 
     def _validate_columns(self, statement: Statement) -> None:
         """Validate all column references in the statement.
@@ -259,17 +260,19 @@ class SchemaValidator:
         if len(parts) == 2:
             table_or_alias, column = parts
 
-            # Resolve alias to real table name
-            table_name = self.table_aliases.get(table_or_alias, table_or_alias)
+            # Resolve alias to real table name (case-insensitive)
+            table_name_lower = self.table_aliases.get(
+                table_or_alias.lower(), table_or_alias.lower()
+            )
 
             # Validate column exists in table (only if table is in query)
-            if table_name in self.tables_in_query:
-                if not schema_cache.is_valid_column(table_name, column):
+            if table_name_lower in self.tables_in_query:
+                if not schema_cache.is_valid_column(table_name_lower, column):
                     raise UnknownColumnError(
                         column_name=column,
-                        table_name=table_name,
+                        table_name=table_name_lower,
                         schema="OMOP CDM v5.4",
-                        valid_columns=schema_cache.get_valid_columns(table_name),
+                        valid_columns=schema_cache.get_valid_columns(table_name_lower),
                     )
 
     def _validate_function_columns(self, function: Function) -> None:

@@ -126,6 +126,18 @@ class TestValidColumns:
         result = validate_schema(query, "test-206")
         assert result.success is True
 
+    def test_case_insensitive_qualified_column(self):
+        """Qualified columns with uppercase table names should validate."""
+        query = "SELECT PERSON.person_id FROM PERSON"
+        result = validate_schema(query, "test-case-qual")
+        assert result.success is True
+
+    def test_case_insensitive_alias_column(self):
+        """Qualified columns with uppercase aliases should validate."""
+        query = "SELECT P.person_id FROM person P"
+        result = validate_schema(query, "test-case-alias")
+        assert result.success is True
+
 
 class TestInvalidColumns:
     """Test invalid column references."""
