@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 HIPAA Query Validator is a production-ready SQL query validation system that enforces HIPAA Safe Harbor de-identification requirements (45 CFR § 164.514(b)(2)) through an 8-layer defense-in-depth security architecture. The system is designed for healthcare data analytics, ensuring queries cannot expose Protected Health Information (PHI) while enabling privacy-preserving aggregate analysis.
 
-**Current Status**: Phase 1 complete (v1.0.0) - Layers 0, 2, 3, 4 implemented with 113/113 tests passing and 85%+ coverage.
+**Current Status**: Phase 1 complete (v1.2.0) - Layers 0, 2, 3, 4 implemented with 113/113 tests passing and 85%+ coverage.
 
 **Python Requirements**: Python 3.11+ required (uses match statements, StrEnum, improved typing). CI tests on Python 3.11 and 3.12.
 
@@ -139,7 +139,7 @@ uv run black src tests && uv run mypy src && uv run ruff check src tests && uv r
 **OMOP Schema**: `config/schemas/omop_5.4.yaml`
 - OMOP CDM 5.4 table and column definitions
 - Reserved for future Layer 1 (schema validation)
-- Not currently enforced in v1.0.0
+- Not currently enforced (planned for future release)
 
 **Validator Settings**: `config/validator.yaml.example`
 - Security: min_patient_count (20000), strict_mode
@@ -248,6 +248,70 @@ tests/
 - Claude performs automated code review
 - Reviews code quality, security, performance, test coverage
 - Posts review comments directly on PRs
+
+## Release Workflow
+
+**Branch Strategy:**
+- `main` - Production releases (tagged with version numbers)
+- `develop` - Integration branch for next release
+- `contrib/*` - Feature development branches
+- `release/*` - Release preparation branches (created from develop, merged to main and back to develop)
+
+**Creating a Release:**
+
+1. **Create release branch from develop**:
+   ```bash
+   git checkout develop
+   git pull
+   git checkout -b release/vX.Y.Z
+   ```
+
+2. **Update version numbers**:
+   - `pyproject.toml` - Update version field
+   - `CHANGELOG.md` - Add new version section with changes
+   - Update version comparison links at bottom of CHANGELOG.md
+
+3. **Commit release preparation**:
+   ```bash
+   git add pyproject.toml CHANGELOG.md
+   git commit -m "Prepare release vX.Y.Z"
+   git push -u origin release/vX.Y.Z
+   ```
+
+4. **Create PR to main**:
+   ```bash
+   gh pr create --base main --head release/vX.Y.Z \
+     --title "Release vX.Y.Z: [Brief Description]" \
+     --body "[Detailed release notes]"
+   ```
+
+5. **After merge to main, create Git tag**:
+   ```bash
+   git checkout main
+   git pull
+   git tag -a vX.Y.Z -m "Release vX.Y.Z: [Description]"
+   git push origin vX.Y.Z
+   ```
+
+6. **Create GitHub release**:
+   ```bash
+   gh release create vX.Y.Z \
+     --title "Release vX.Y.Z: [Title]" \
+     --notes "[Release notes]"
+   ```
+
+7. **Merge back to develop** (keep develop in sync):
+   ```bash
+   git checkout -b release/vX.Y.Z vX.Y.Z  # Recreate from tag if deleted
+   gh pr create --base develop --head release/vX.Y.Z \
+     --title "Merge release vX.Y.Z into develop"
+   ```
+
+**Version Numbering (Semantic Versioning):**
+- MAJOR.MINOR.PATCH (e.g., 1.2.0)
+- MAJOR: Breaking changes to validation behavior or API
+- MINOR: New features, new validation layers, non-breaking enhancements
+- PATCH: Bug fixes, documentation updates, performance improvements
 
 ## Error Taxonomy
 
