@@ -284,6 +284,15 @@ hipaa-query-validator/
 - **E401**: Subquery not allowed
 - **E402**: CTE (WITH clause) not allowed
 
+### Layer 8: ASCII Output Validation (E801-E899)
+- **E801**: Non-ASCII character in query output
+- **E803**: Patient count below threshold in results
+- **E805**: Result set exceeds maximum row limit
+
+### System Errors (E901-E999)
+- **E901**: Configuration file error
+- **E902**: SQL parsing error
+
 All error codes include:
 - Detailed error message
 - Educational guidance

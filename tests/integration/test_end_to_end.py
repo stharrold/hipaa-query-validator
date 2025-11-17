@@ -280,7 +280,7 @@ class TestEducationalResponses:
             assert guidance is not None
             assert len(guidance) > 0
             # Some codes may not have patterns (system errors)
-            if code not in ["E801", "E802"]:
+            if code not in ["E901", "E902"]:
                 assert pattern is not None or "Unknown" in guidance
 
     def test_educational_response_format(self):

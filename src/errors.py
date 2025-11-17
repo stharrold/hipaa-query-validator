@@ -336,7 +336,92 @@ class UnknownColumnError(SchemaValidationError):
         super().__init__("E102", message, details)
 
 
-# System Errors (E801-E899)
+# Layer 8: ASCII Output Validation Errors (E801-E899)
+
+
+class ASCIIOutputValidationError(ValidationError):
+    """Base class for ASCII output validation errors."""
+
+    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
+        """Initialize ASCII output validation error."""
+        super().__init__(code, message, "ascii_output", details)
+
+
+class NonASCIIOutputError(ASCIIOutputValidationError):
+    """Error E801: Non-ASCII character detected in query output."""
+
+    def __init__(self, column: str, row_index: int, char_code: int) -> None:
+        """Initialize non-ASCII output error.
+
+        Args:
+            column: Column name containing non-ASCII data
+            row_index: Row index where non-ASCII character was found
+            char_code: Unicode code point of the invalid character
+        """
+        message = (
+            f"Non-ASCII character detected in query output.\n\n"
+            f"Column: {column}\n"
+            f"Row: {row_index}\n"
+            f"Invalid character code: {char_code} (0x{char_code:02X})\n\n"
+            f"Query results must contain only ASCII characters (0x20-0x7E plus \\n\\r\\t).\n\n"
+            f"This may indicate:\n"
+            f"- Data encoding issues in source data\n"
+            f"- Unicode characters in database\n"
+            f"- Potential PHI exposure via encoding\n\n"
+            f"Please review your data sources and ensure ASCII-only output."
+        )
+        details = {"column": column, "row_index": row_index, "char_code": char_code}
+        super().__init__("E801", message, details)
+
+
+class PatientCountBelowThresholdError(ASCIIOutputValidationError):
+    """Error E803: Patient count in results below HIPAA minimum threshold."""
+
+    def __init__(self, actual_count: int, min_count: int = 20000) -> None:
+        """Initialize patient count below threshold error.
+
+        Args:
+            actual_count: Actual patient count in results
+            min_count: Minimum required patient count
+        """
+        message = (
+            f"Patient count below HIPAA minimum threshold.\n\n"
+            f"Actual count: {actual_count:,}\n"
+            f"Required minimum: {min_count:,}\n\n"
+            f"HIPAA Safe Harbor requires a minimum of {min_count:,} patients to ensure "
+            f"de-identification. Your query result does not meet this threshold.\n\n"
+            f"This error indicates a system issue, as the SQL wrapper should have "
+            f"blocked this query. Please contact your system administrator."
+        )
+        details = {"actual_count": actual_count, "min_count": min_count}
+        super().__init__("E803", message, details)
+
+
+class TooManyRowsError(ASCIIOutputValidationError):
+    """Error E805: Result set exceeds maximum row limit."""
+
+    def __init__(self, row_count: int, max_rows: int = 10000) -> None:
+        """Initialize too many rows error.
+
+        Args:
+            row_count: Actual number of rows in result
+            max_rows: Maximum allowed rows
+        """
+        message = (
+            f"Result set exceeds maximum row limit.\n\n"
+            f"Rows returned: {row_count:,}\n"
+            f"Maximum allowed: {max_rows:,}\n\n"
+            f"Large result sets may indicate:\n"
+            f"- Missing GROUP BY clause\n"
+            f"- Missing aggregation\n"
+            f"- Cartesian product (missing JOIN conditions)\n\n"
+            f"Please review your query structure and add appropriate grouping."
+        )
+        details = {"row_count": row_count, "max_rows": max_rows}
+        super().__init__("E805", message, details)
+
+
+# System Errors (E901-E999)
 
 
 class SystemError(ValidationError):
@@ -348,7 +433,7 @@ class SystemError(ValidationError):
 
 
 class ConfigurationError(SystemError):
-    """Error E801: Configuration file error."""
+    """Error E901: Configuration file error."""
 
     def __init__(self, config_file: str, reason: str) -> None:
         """Initialize configuration error.
@@ -359,11 +444,11 @@ class ConfigurationError(SystemError):
         """
         message = f"Configuration error in '{config_file}': {reason}"
         details = {"config_file": config_file, "reason": reason}
-        super().__init__("E801", message, details)
+        super().__init__("E901", message, details)
 
 
 class ParsingError(SystemError):
-    """Error E802: SQL parsing error."""
+    """Error E902: SQL parsing error."""
 
     def __init__(self, reason: str) -> None:
         """Initialize parsing error.
@@ -373,4 +458,4 @@ class ParsingError(SystemError):
         """
         message = f"SQL parsing error: {reason}"
         details = {"reason": reason}
-        super().__init__("E802", message, details)
+        super().__init__("E902", message, details)

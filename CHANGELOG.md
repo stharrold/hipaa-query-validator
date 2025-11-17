@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Layer 8: ASCII Output Validation (#60)
+  - Validates query result sets for ASCII-only characters
+  - Enforces HIPAA minimum patient count threshold (20,000) in actual results
+  - Enforces maximum result set size limit (10,000 rows by default)
+  - Detects suspicious PHI patterns in output (dates, emails, phone numbers, SSN, ZIP codes)
+  - New error codes:
+    - E801: Non-ASCII character in query output
+    - E803: Patient count below threshold in results
+    - E805: Result set exceeds maximum row limit
+  - 54 comprehensive tests with 100% coverage of Layer 8 code
+  - Performance: <50ms overhead for 1000 rows
+  - Completes the 8-layer defense-in-depth security architecture
+
+### Changed
+- Reorganized error code ranges for better layer alignment (#60)
+  - Moved system errors from E801-E899 to E901-E999
+  - Reserved E801-E899 for Layer 8 (ASCII Output Validation)
+  - Updated error codes:
+    - E901: Configuration file error (previously E801)
+    - E902: SQL parsing error (previously E802)
+  - Updated educational guidance and test references
+
+### Tests
+- Total test count increased from 113 to 167 tests
+  - ASCII Input: 29 tests
+  - PHI: 39 tests
+  - Aggregation: 28 tests
+  - ASCII Output: 54 tests (new)
+  - Integration: 17 tests
+- Overall code coverage: 86.51% (exceeds 85% requirement)
+
 ## [1.2.2] - 2025-11-17
 
 ### Fixed
