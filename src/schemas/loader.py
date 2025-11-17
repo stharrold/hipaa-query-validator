@@ -5,9 +5,8 @@ fast validation of table and column references against the configured schema.
 """
 
 from pathlib import Path
-from typing import Dict, Set
 
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 
 class SchemaCache:
@@ -21,6 +20,9 @@ class SchemaCache:
     """
 
     _instance: "SchemaCache | None" = None
+    _schema_data: dict[str, set[str]]
+    _schema_version: str
+    _loaded: bool
 
     def __new__(cls) -> "SchemaCache":
         """Create or return singleton instance."""
@@ -50,7 +52,7 @@ class SchemaCache:
         if not schema_path.exists():
             raise FileNotFoundError(f"Schema configuration not found: {schema_path}")
 
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             schema = yaml.safe_load(f)
 
         # Validate schema version
@@ -98,7 +100,7 @@ class SchemaCache:
             return False
         return column_name.lower() in self._schema_data[table_lower]
 
-    def get_valid_tables(self) -> Set[str]:
+    def get_valid_tables(self) -> set[str]:
         """Get set of all valid table names.
 
         Returns:
@@ -106,7 +108,7 @@ class SchemaCache:
         """
         return set(self._schema_data.keys())
 
-    def get_valid_columns(self, table_name: str) -> Set[str]:
+    def get_valid_columns(self, table_name: str) -> set[str]:
         """Get set of valid columns for a table.
 
         Args:

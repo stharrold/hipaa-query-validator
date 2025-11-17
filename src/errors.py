@@ -5,8 +5,6 @@ used throughout the validation system. Each error includes educational
 guidance to help users understand and fix issues.
 """
 
-from typing import Set
-
 
 class ValidationError(Exception):
     """Base exception for all validation errors.
@@ -310,7 +308,7 @@ class SchemaValidationError(ValidationError):
 class UnknownTableError(SchemaValidationError):
     """Error E101: Table not found in approved schema."""
 
-    def __init__(self, table_name: str, schema: str, valid_tables: Set[str] | None = None) -> None:
+    def __init__(self, table_name: str, schema: str, valid_tables: set[str] | None = None) -> None:
         """Initialize unknown table error.
 
         Args:
@@ -354,7 +352,7 @@ class UnknownColumnError(SchemaValidationError):
     """Error E102: Column not found in table schema."""
 
     def __init__(
-        self, column_name: str, table_name: str, schema: str, valid_columns: Set[str] | None = None
+        self, column_name: str, table_name: str, schema: str, valid_columns: set[str] | None = None
     ) -> None:
         """Initialize unknown column error.
 

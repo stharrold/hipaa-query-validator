@@ -357,7 +357,7 @@ class TestConfiguration:
         query = "SELECT * FROM bad_table"
         try:
             validate_schema(query, "test-verbosity")
-            assert False, "Should have raised error"
+            raise AssertionError("Should have raised error")
         except UnknownTableError as e:
             # Error should not include suggestions (shorter message)
             error_msg = str(e)
@@ -367,7 +367,7 @@ class TestConfiguration:
         set_error_verbosity(True)
         try:
             validate_schema(query, "test-verbosity-2")
-            assert False, "Should have raised error"
+            raise AssertionError("Should have raised error")
         except UnknownTableError as e:
             # Error should include suggestions (longer message with table list)
             error_msg = str(e)

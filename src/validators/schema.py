@@ -16,7 +16,6 @@ from sqlparse.sql import (  # type: ignore[import-untyped]
     Where,
 )
 from sqlparse.tokens import Keyword  # type: ignore[import-untyped]
-from typing import Dict, Set
 
 from ..errors import SchemaNotLoadedError, UnknownColumnError, UnknownTableError
 from ..models import ValidationResult
@@ -115,8 +114,8 @@ class SchemaValidator:
             max_recursion_depth: Maximum recursion depth for token traversal
         """
         self.request_id = request_id
-        self.table_aliases: Dict[str, str] = {}  # alias -> real_table_name
-        self.tables_in_query: Set[str] = set()
+        self.table_aliases: dict[str, str] = {}  # alias -> real_table_name
+        self.tables_in_query: set[str] = set()
         self.max_recursion_depth = max_recursion_depth
 
     def validate(self, statement: Statement) -> None:
@@ -428,7 +427,7 @@ class SchemaValidator:
             )
 
         if hasattr(token, "tokens"):
-            for subtoken in token.tokens:  # type: ignore[attr-defined]
+            for subtoken in token.tokens:
                 if isinstance(subtoken, Identifier):
                     self._validate_column_identifier(subtoken)
                 elif isinstance(subtoken, IdentifierList):
