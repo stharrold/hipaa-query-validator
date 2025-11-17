@@ -44,6 +44,12 @@ class TestSchemaLoading:
         # All threads should see same schema
         assert all(r == results[0] for r in results), "All threads should see consistent schema"
 
+    def test_schema_version_validation(self):
+        """Schema cache should validate version on load."""
+        cache = SchemaCache()
+        version = cache.get_schema_version()
+        assert version == "5.4"
+
 
 class TestValidTableCheck:
     """Test valid table detection."""

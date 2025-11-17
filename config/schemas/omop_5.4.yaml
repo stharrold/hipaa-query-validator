@@ -7,8 +7,9 @@
 # License: Apache 2.0
 # Last Updated: 2023
 
-version: "5.4"
-standard: "OMOP CDM"
+schema_version: "5.4"
+schema_name: "OMOP CDM"
+last_updated: "2023-01-15"
 
 # Clinical Data Tables
 tables:

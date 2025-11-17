@@ -27,6 +27,7 @@ class SchemaCache:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._schema_data = {}  # Instance-level initialization
+            cls._instance._schema_version = ""  # Schema version
             cls._instance._loaded = False
         return cls._instance
 
@@ -41,6 +42,7 @@ class SchemaCache:
 
         Raises:
             FileNotFoundError: If schema file not found
+            ValueError: If schema version mismatch
             yaml.YAMLError: If schema file is malformed
         """
         schema_path = Path(__file__).parent.parent.parent / "config" / "schemas" / "omop_5.4.yaml"
@@ -50,6 +52,18 @@ class SchemaCache:
 
         with open(schema_path, "r") as f:
             schema = yaml.safe_load(f)
+
+        # Validate schema version
+        expected_version = "5.4"
+        actual_version = schema.get("schema_version", "unknown")
+        if actual_version != expected_version:
+            raise ValueError(
+                f"Schema version mismatch: expected {expected_version}, "
+                f"got {actual_version}. File: {schema_path}"
+            )
+
+        # Store version
+        self._schema_version = actual_version
 
         # Build lookup structures: table_name -> set(column_names)
         tables = schema.get("tables", {})
@@ -102,6 +116,14 @@ class SchemaCache:
             Set of column names (lowercase), or empty set if table not found
         """
         return self._schema_data.get(table_name.lower(), set())
+
+    def get_schema_version(self) -> str:
+        """Get loaded schema version.
+
+        Returns:
+            Schema version string (e.g., "5.4")
+        """
+        return self._schema_version
 
 
 # Global singleton instance
