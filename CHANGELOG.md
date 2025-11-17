@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Layer 1: OMOP/FHIR Schema Validation** (#56)
+  - Validates table references against OMOP CDM v5.4 schema
+  - Validates column references for known tables
+  - New error codes: E101 (unknown table), E102 (unknown column), E103 (schema not loaded)
+  - Educational error messages with valid table/column suggestions
+  - Singleton schema cache for O(1) validation lookups
+  - 46 new tests (28 unit + 16 loader + 2 integration)
+  - Performance: <3ms per query (p95)
+  - Test coverage: 87% (exceeds 85% requirement)
+
+### Changed
+- Validation pipeline now includes Layer 1 between Layer 0 (ASCII) and Layer 2 (PHI)
+- Updated all integration tests to include schema validation
+- Performance target updated from <10ms to <60ms (includes all 5 layers)
+
 ## [1.2.2] - 2025-11-17
 
 ### Fixed
