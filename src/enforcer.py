@@ -14,13 +14,13 @@ provides strong privacy protection for aggregate data.
 """
 
 import re
+from typing import Any
 
-import sqlparse
-from sqlparse.tokens import Keyword
+import sqlparse  # type: ignore[import-untyped]
+from sqlparse.tokens import Keyword  # type: ignore[import-untyped]
 
 from .errors import CTENotAllowedError, SubqueryNotAllowedError
 from .models import ValidationResult
-
 
 # Minimum patient count threshold (per HIPAA Safe Harbor guidance)
 MIN_PATIENT_COUNT = 20000
@@ -125,7 +125,7 @@ class SQLEnforcer:
         # Method 1: Count SELECT keywords - if more than 1, there's a subquery
         select_count = 0
 
-        def count_selects(tokens):
+        def count_selects(tokens: Any) -> None:
             nonlocal select_count
             for token in tokens:
                 if hasattr(token, "tokens"):

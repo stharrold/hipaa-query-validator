@@ -5,7 +5,6 @@ used throughout the validation system. Each error includes educational
 guidance to help users understand and fix issues.
 """
 
-from typing import Optional
 
 
 class ValidationError(Exception):
@@ -23,7 +22,7 @@ class ValidationError(Exception):
         code: str,
         message: str,
         layer: str,
-        details: Optional[dict] = None,
+        details: dict | None = None,
     ) -> None:
         """Initialize validation error.
 
@@ -46,7 +45,7 @@ class ValidationError(Exception):
 class ASCIIValidationError(ValidationError):
     """Base class for ASCII input validation errors."""
 
-    def __init__(self, code: str, message: str, details: Optional[dict] = None) -> None:
+    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
         """Initialize ASCII validation error."""
         super().__init__(code, message, "ascii_input", details)
 
@@ -103,7 +102,7 @@ class EmptyQueryError(ASCIIValidationError):
 class PHIValidationError(ValidationError):
     """Base class for PHI column validation errors."""
 
-    def __init__(self, code: str, message: str, details: Optional[dict] = None) -> None:
+    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
         """Initialize PHI validation error."""
         super().__init__(code, message, "phi", details)
 
@@ -182,7 +181,7 @@ class SelectStarError(PHIValidationError):
 class AggregationValidationError(ValidationError):
     """Base class for aggregation validation errors."""
 
-    def __init__(self, code: str, message: str, details: Optional[dict] = None) -> None:
+    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
         """Initialize aggregation validation error."""
         super().__init__(code, message, "aggregation", details)
 
@@ -267,7 +266,7 @@ class InvalidGroupByColumnError(AggregationValidationError):
 class EnforcementError(ValidationError):
     """Base class for SQL enforcement errors."""
 
-    def __init__(self, code: str, message: str, details: Optional[dict] = None) -> None:
+    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
         """Initialize enforcement error."""
         super().__init__(code, message, "enforcement", details)
 
@@ -302,7 +301,7 @@ class CTENotAllowedError(EnforcementError):
 class SchemaValidationError(ValidationError):
     """Base class for schema validation errors."""
 
-    def __init__(self, code: str, message: str, details: Optional[dict] = None) -> None:
+    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
         """Initialize schema validation error."""
         super().__init__(code, message, "schema", details)
 
@@ -344,7 +343,7 @@ class UnknownColumnError(SchemaValidationError):
 class SystemError(ValidationError):
     """Base class for system-level errors."""
 
-    def __init__(self, code: str, message: str, details: Optional[dict] = None) -> None:
+    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
         """Initialize system error."""
         super().__init__(code, message, "system", details)
 

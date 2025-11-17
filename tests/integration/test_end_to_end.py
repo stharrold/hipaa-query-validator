@@ -8,7 +8,7 @@ import uuid
 import pytest
 
 from src.educational import format_educational_response, get_educational_guidance
-from src.enforcer import wrap_query
+from src.enforcer import validate_no_circumvention, wrap_query
 from src.errors import (
     DirectPHIIdentifierError,
     EmptyQueryError,
@@ -21,7 +21,6 @@ from src.errors import (
 from src.validators.aggregation import validate_aggregation
 from src.validators.ascii_input import validate_ascii_input
 from src.validators.phi import validate_phi
-from src.enforcer import validate_no_circumvention
 
 
 def generate_request_id() -> str:

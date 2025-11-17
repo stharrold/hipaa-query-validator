@@ -16,7 +16,6 @@ from ..errors import (
 )
 from ..models import ValidationResult
 
-
 # Allowed ASCII characters:
 # - Printable ASCII: 0x20 (space) to 0x7E (~)
 # - Whitespace control characters: \n (0x0A), \r (0x0D), \t (0x09)
