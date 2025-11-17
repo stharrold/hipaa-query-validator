@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.errors import SchemaNotLoadedError, UnknownColumnError, UnknownTableError
+from src.errors import UnknownColumnError, UnknownTableError
 from src.validators.schema import validate_schema
 
 
@@ -339,4 +339,4 @@ class TestPerformance:
         # This is acceptable given the complexity of sqlparse traversal
         assert (
             duration < 3.0
-        ), f"Performance regression: {duration:.2f}s for 1000 queries ({duration*1000:.1f}ms per query)"
+        ), f"Performance regression: {duration:.2f}s for 1000 queries ({duration:.1f}ms per query)"

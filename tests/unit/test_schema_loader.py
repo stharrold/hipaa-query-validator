@@ -1,7 +1,5 @@
 """Unit tests for schema loading and caching."""
 
-import pytest
-
 from src.schemas.loader import SchemaCache, schema_cache
 
 
@@ -186,5 +184,5 @@ class TestPerformance:
             schema_cache.is_valid_column("person", "person_id")
         duration = time.perf_counter() - start
 
-        # Should complete in < 0.1 seconds (10 microseconds per lookup pair)
+        # Should complete in < 0.1 seconds (10 microseconds average per lookup pair)
         assert duration < 0.1, f"Performance regression: {duration:.3f}s for 10,000 lookup pairs"
