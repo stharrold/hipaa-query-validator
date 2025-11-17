@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.1] - 2025-11-16
+## [1.1.1] - 2024-11-16
 
 ### Fixed
 - Fixed potential false positives in PHI detection from string literals (#14)
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduces repeated compilation overhead during query validation
 
 ### Documentation
-- Updated test count in CLAUDE.md to reflect actual 38 PHI validation tests (#18)
+- Updated test count in CLAUDE.md to reflect actual 39 PHI validation tests (#18)
 - Improved test docstring accuracy for PHI detection tests (#13, #19)
 - Added comprehensive docstring documentation with Raises sections (#16)
 - Implemented closure verification protocol for completed issues (#12)
@@ -34,12 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All 113 tests passing
 - Code coverage maintained at 85%+
 
-## [1.1.0] - 2025-11-16
+## [1.1.0] - 2024-11-16
 
 ### Added
 - Phase 1 implementation complete with 4-layer validation architecture
 - Layers 0, 2, 3, 4 implemented with full test coverage
-- 110 tests with 85%+ code coverage
+- 113 tests with 85%+ code coverage
 - HIPAA Safe Harbor compliance enforcement
 - Educational error messaging system
 

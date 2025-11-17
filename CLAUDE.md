@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 HIPAA Query Validator is a production-ready SQL query validation system that enforces HIPAA Safe Harbor de-identification requirements (45 CFR § 164.514(b)(2)) through an 8-layer defense-in-depth security architecture. The system is designed for healthcare data analytics, ensuring queries cannot expose Protected Health Information (PHI) while enabling privacy-preserving aggregate analysis.
 
-**Current Status**: Phase 1 complete (v1.0.0) - Layers 0, 2, 3, 4 implemented with 110/110 tests passing and 85%+ coverage.
+**Current Status**: Phase 1 complete (v1.0.0) - Layers 0, 2, 3, 4 implemented with 113/113 tests passing and 85%+ coverage.
 
 ## Core Architecture
 
@@ -125,7 +125,7 @@ PHI identifiers are defined in `config/schemas/phi_identifiers.yaml`. When addin
 ## Testing Requirements
 
 **Critical Constraints:**
-- Maintain 100% test pass rate (110/110 tests)
+- Maintain 100% test pass rate (113/113 tests)
 - Maintain >=85% code coverage
 - No breaking changes to existing functionality
 - Test after EACH code change
@@ -133,9 +133,9 @@ PHI identifiers are defined in `config/schemas/phi_identifiers.yaml`. When addin
 **Test Organization:**
 ```
 tests/
-├── unit/                    # Isolated component tests (95 tests)
+├── unit/                    # Isolated component tests (96 tests)
 │   ├── test_ascii_input.py  # 29 ASCII validation tests
-│   ├── test_phi.py          # 38 PHI validation tests
+│   ├── test_phi.py          # 39 PHI validation tests
 │   └── test_aggregation.py  # 28 aggregation tests
 └── integration/             # End-to-end workflows (17 tests)
     └── test_end_to_end.py   # Full validation pipeline
