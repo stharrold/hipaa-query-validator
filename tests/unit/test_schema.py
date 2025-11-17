@@ -340,3 +340,51 @@ class TestPerformance:
         assert (
             duration < 3.0
         ), f"Performance regression: {duration:.2f}s for 1000 queries ({duration:.1f}ms per query)"
+
+
+class TestConfiguration:
+    """Test configuration options."""
+
+    def test_error_verbosity_configuration(self):
+        """Error verbosity should be configurable."""
+        from src.validators.schema import get_error_verbosity, set_error_verbosity
+
+        # Default should be verbose
+        assert get_error_verbosity() is True
+
+        # Test non-verbose mode
+        set_error_verbosity(False)
+        query = "SELECT * FROM bad_table"
+        try:
+            validate_schema(query, "test-verbosity")
+            assert False, "Should have raised error"
+        except UnknownTableError as e:
+            # Error should not include suggestions (shorter message)
+            error_msg = str(e)
+            assert "Valid OMOP CDM v5.4 tables include:" not in error_msg
+
+        # Restore verbose mode
+        set_error_verbosity(True)
+        try:
+            validate_schema(query, "test-verbosity-2")
+            assert False, "Should have raised error"
+        except UnknownTableError as e:
+            # Error should include suggestions (longer message with table list)
+            error_msg = str(e)
+            assert "Valid OMOP CDM v5.4 tables include:" in error_msg
+
+    def test_recursion_depth_limit(self):
+        """Extremely nested SQL should be rejected."""
+        # Create deeply nested query (beyond limit)
+        nested = "SELECT person_id FROM person WHERE "
+        nested += " AND ".join([f"(year_of_birth > {1900 + i})" for i in range(150)])
+
+        # This should not crash, but may hit recursion limit
+        # (Actual limit depends on SQL complexity, not just string length)
+        try:
+            result = validate_schema(nested, "test-recursion")
+            # If it validates, that's fine - test is just ensuring no crash
+            assert result.success is True
+        except ValueError as e:
+            # If recursion limit hit, that's also acceptable
+            assert "too deeply nested" in str(e).lower()

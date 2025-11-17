@@ -22,6 +22,28 @@ from ..errors import SchemaNotLoadedError, UnknownColumnError, UnknownTableError
 from ..models import ValidationResult
 from ..schemas.loader import schema_cache
 
+# Module-level configuration for error verbosity
+_VERBOSE_ERRORS = True  # Default: include suggestions
+
+
+def set_error_verbosity(verbose: bool) -> None:
+    """Configure whether errors include suggestions for valid tables/columns.
+
+    Args:
+        verbose: If True, include suggestions. If False, omit for production.
+    """
+    global _VERBOSE_ERRORS
+    _VERBOSE_ERRORS = verbose
+
+
+def get_error_verbosity() -> bool:
+    """Get current error verbosity setting.
+
+    Returns:
+        True if errors include suggestions, False otherwise
+    """
+    return _VERBOSE_ERRORS
+
 
 def validate_schema(query: str, request_id: str) -> ValidationResult:
     """Validate query against OMOP schema.
@@ -85,15 +107,17 @@ class SchemaValidator:
     - Schema-qualified tables (e.g., "dbo.person")
     """
 
-    def __init__(self, request_id: str):
+    def __init__(self, request_id: str, max_recursion_depth: int = 100):
         """Initialize schema validator.
 
         Args:
             request_id: Unique identifier for this validation request
+            max_recursion_depth: Maximum recursion depth for token traversal
         """
         self.request_id = request_id
         self.table_aliases: Dict[str, str] = {}  # alias -> real_table_name
         self.tables_in_query: Set[str] = set()
+        self.max_recursion_depth = max_recursion_depth
 
     def validate(self, statement: Statement) -> None:
         """Main validation entry point.
@@ -114,7 +138,7 @@ class SchemaValidator:
                 raise UnknownTableError(
                     table_name=table_name,
                     schema="OMOP CDM v5.4",
-                    valid_tables=schema_cache.get_valid_tables(),
+                    valid_tables=schema_cache.get_valid_tables() if _VERBOSE_ERRORS else set(),
                 )
 
         # Pass 2: Validate column references
@@ -222,7 +246,7 @@ class SchemaValidator:
             if isinstance(token, Where):
                 from_seen = False
                 in_join = False
-                self._validate_columns_recursive(token)
+                self._validate_columns_recursive(token, depth=0)
                 continue
 
             # Stop at GROUP BY/ORDER BY/HAVING/LIMIT (keyword-based)
@@ -269,7 +293,7 @@ class SchemaValidator:
                 self._validate_function_columns(token)
             elif hasattr(token, "tokens"):
                 # Recurse into sub-tokens (ON clause, etc.)
-                self._validate_columns_recursive(token)
+                self._validate_columns_recursive(token, depth=0)
 
     def _validate_column_identifier(self, identifier: Identifier) -> None:
         """Validate a single column identifier.
@@ -320,7 +344,11 @@ class SchemaValidator:
                         column_name=column,
                         table_name=table_name_lower,
                         schema="OMOP CDM v5.4",
-                        valid_columns=schema_cache.get_valid_columns(table_name_lower),
+                        valid_columns=(
+                            schema_cache.get_valid_columns(table_name_lower)
+                            if _VERBOSE_ERRORS
+                            else set()
+                        ),
                     )
 
     def _validate_unqualified_column(self, column_name: str) -> None:
@@ -383,12 +411,22 @@ class SchemaValidator:
                     if isinstance(identifier, Identifier):
                         self._validate_column_identifier(identifier)
 
-    def _validate_columns_recursive(self, token: object) -> None:
+    def _validate_columns_recursive(self, token: object, depth: int = 0) -> None:
         """Recursively validate columns in nested structures.
 
         Args:
             token: Token to recursively validate
+            depth: Current recursion depth
+
+        Raises:
+            ValueError: If recursion depth exceeds maximum
         """
+        if depth > self.max_recursion_depth:
+            raise ValueError(
+                f"SQL structure too deeply nested (max depth: {self.max_recursion_depth}). "
+                f"This may indicate malformed SQL or a denial-of-service attempt."
+            )
+
         if hasattr(token, "tokens"):
             for subtoken in token.tokens:  # type: ignore[attr-defined]
                 if isinstance(subtoken, Identifier):
@@ -400,4 +438,4 @@ class SchemaValidator:
                 elif isinstance(subtoken, Function):
                     self._validate_function_columns(subtoken)
                 elif hasattr(subtoken, "tokens"):
-                    self._validate_columns_recursive(subtoken)
+                    self._validate_columns_recursive(subtoken, depth + 1)
