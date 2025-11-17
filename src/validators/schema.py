@@ -210,7 +210,54 @@ class SchemaValidator:
         Raises:
             UnknownColumnError: If column reference is invalid
         """
+        from_seen = False
+        in_join = False
+
         for token in statement.tokens:
+            # Skip whitespace
+            if token.is_whitespace:
+                continue
+
+            # WHERE is packaged as a Where object, validate its contents
+            if isinstance(token, Where):
+                from_seen = False
+                in_join = False
+                self._validate_columns_recursive(token)
+                continue
+
+            # Stop at GROUP BY/ORDER BY/HAVING/LIMIT (keyword-based)
+            if token.ttype is Keyword and token.value.upper() in (
+                "WHERE",
+                "GROUP",
+                "ORDER",
+                "HAVING",
+                "LIMIT",
+            ):
+                from_seen = False
+                in_join = False
+                continue
+
+            # Track when we're in FROM clause
+            if token.ttype is Keyword and token.value.upper() == "FROM":
+                from_seen = True
+                continue
+
+            # Track JOIN keywords
+            if token.ttype is Keyword and "JOIN" in token.value.upper():
+                in_join = True
+                from_seen = True
+                continue
+
+            # Skip table identifiers in FROM/JOIN clauses
+            if from_seen or in_join:
+                if isinstance(token, Identifier) or isinstance(token, IdentifierList):
+                    # These are table references, not columns - skip
+                    if not in_join:
+                        from_seen = False
+                    in_join = False
+                    continue
+
+            # Validate column identifiers (not in FROM/JOIN)
             if isinstance(token, IdentifierList):
                 # SELECT column1, column2, ...
                 for identifier in token.get_identifiers():
@@ -221,7 +268,7 @@ class SchemaValidator:
                 # COUNT(column_name), etc.
                 self._validate_function_columns(token)
             elif hasattr(token, "tokens"):
-                # Recurse into sub-tokens (WHERE, ON, etc.)
+                # Recurse into sub-tokens (ON clause, etc.)
                 self._validate_columns_recursive(token)
 
     def _validate_column_identifier(self, identifier: Identifier) -> None:
@@ -244,8 +291,9 @@ class SchemaValidator:
             column_str = str(identifier).strip()
             if "." in column_str:
                 self._validate_qualified_column(column_str)
-            # Unqualified columns can't be validated without table context
-            # This is acceptable - ambiguous references caught by database
+            else:
+                # Validate unqualified column against all tables in query
+                self._validate_unqualified_column(column_str)
 
     def _validate_qualified_column(self, column_ref: str) -> None:
         """Validate a qualified column reference (table.column).
@@ -274,6 +322,52 @@ class SchemaValidator:
                         schema="OMOP CDM v5.4",
                         valid_columns=schema_cache.get_valid_columns(table_name_lower),
                     )
+
+    def _validate_unqualified_column(self, column_name: str) -> None:
+        """Validate unqualified column exists in at least one query table.
+
+        Args:
+            column_name: Column name to validate
+
+        Raises:
+            UnknownColumnError: If column not found in any query table
+        """
+        # Skip validation if no tables in query yet
+        if not self.tables_in_query:
+            return
+
+        # Skip validation for SQL keywords and common function names
+        # These are not column references
+        sql_keywords = {
+            "count",
+            "sum",
+            "avg",
+            "min",
+            "max",
+            "distinct",
+            "as",
+            "asc",
+            "desc",
+            "null",
+            "true",
+            "false",
+        }
+        if column_name.lower() in sql_keywords:
+            return
+
+        # Check if column exists in any table
+        column_lower = column_name.lower()
+        for table_name in self.tables_in_query:
+            if schema_cache.is_valid_column(table_name, column_lower):
+                return  # Valid - found in at least one table
+
+        # Column not found in any query table
+        raise UnknownColumnError(
+            column_name=column_name,
+            table_name=f"any of [{', '.join(sorted(self.tables_in_query))}]",
+            schema="OMOP CDM v5.4",
+            valid_columns=set(),  # Cannot provide specific columns for multiple tables
+        )
 
     def _validate_function_columns(self, function: Function) -> None:
         """Validate columns inside functions (e.g., COUNT(person_id)).

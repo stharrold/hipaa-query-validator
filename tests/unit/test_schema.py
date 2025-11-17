@@ -138,6 +138,23 @@ class TestValidColumns:
         result = validate_schema(query, "test-case-alias")
         assert result.success is True
 
+    def test_valid_unqualified_column(self):
+        """Valid unqualified column should pass."""
+        query = "SELECT person_id FROM person"
+        result = validate_schema(query, "test-unqual-valid")
+        assert result.success is True
+
+    def test_ambiguous_unqualified_column_allowed(self):
+        """Ambiguous unqualified column (exists in multiple tables) should pass."""
+        query = """
+        SELECT person_id
+        FROM person p
+        JOIN condition_occurrence c ON p.person_id = c.person_id
+        """
+        # Both tables have person_id - validator allows, DB will require qualification
+        result = validate_schema(query, "test-unqual-ambig")
+        assert result.success is True
+
 
 class TestInvalidColumns:
     """Test invalid column references."""
@@ -173,6 +190,13 @@ class TestInvalidColumns:
             validate_schema(query, "test-303")
 
         assert exc_info.value.code == "E102"
+        assert "bad_column" in str(exc_info.value)
+
+    def test_invalid_unqualified_column(self):
+        """Invalid unqualified column should raise error."""
+        query = "SELECT bad_column FROM person"
+        with pytest.raises(UnknownColumnError) as exc_info:
+            validate_schema(query, "test-unqual-invalid")
         assert "bad_column" in str(exc_info.value)
 
     def test_invalid_column_shows_valid_columns(self):
