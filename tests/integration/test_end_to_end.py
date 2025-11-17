@@ -21,6 +21,7 @@ from src.errors import (
 from src.validators.aggregation import validate_aggregation
 from src.validators.ascii_input import validate_ascii_input
 from src.validators.phi import validate_phi
+from src.validators.sample_execution import validate_sample_execution
 
 
 def generate_request_id() -> str:
@@ -62,6 +63,13 @@ class TestValidQueryEndToEnd:
         wrapped = wrap_query(query)
         assert "WHERE Count_Patients >= 20000" in wrapped
 
+        # Layer 5: Sample execution validation
+        result_5 = validate_sample_execution(wrapped, request_id)
+        assert result_5.success is True
+        assert result_5.layer == "sample_execution"
+        assert result_5.details is not None
+        assert result_5.details["status"] == "executed"
+
     def test_complex_valid_query(self):
         """Test complex query with multiple dimensions."""
         query = """
@@ -84,6 +92,10 @@ class TestValidQueryEndToEnd:
         assert validate_aggregation(query, request_id).success is True
         assert validate_no_circumvention(query, request_id).success is True
 
+        # Layer 5: Sample execution
+        wrapped = wrap_query(query)
+        assert validate_sample_execution(wrapped, request_id).success is True
+
     def test_global_aggregate_valid(self):
         """Test global aggregate query (no GROUP BY needed)."""
         query = """
@@ -97,6 +109,10 @@ class TestValidQueryEndToEnd:
         assert validate_phi(query, request_id).success is True
         assert validate_aggregation(query, request_id).success is True
         assert validate_no_circumvention(query, request_id).success is True
+
+        # Layer 5: Sample execution
+        wrapped = wrap_query(query)
+        assert validate_sample_execution(wrapped, request_id).success is True
 
 
 class TestLayer0Failures:

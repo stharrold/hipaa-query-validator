@@ -22,7 +22,7 @@ The HIPAA Query Validator enforces **Safe Harbor de-identification** per 45 CFR 
 
 ## Security Architecture
 
-### Validation Layers (Phase 1)
+### Validation Layers
 
 | Layer | Name | Purpose | Status |
 |-------|------|---------|--------|
@@ -31,11 +31,11 @@ The HIPAA Query Validator enforces **Safe Harbor de-identification** per 45 CFR 
 | 2 | PHI Column Validation | Block 18 HIPAA identifiers | ✅ Implemented |
 | 3 | Aggregation Enforcement | Require GROUP BY + patient count | ✅ Implemented |
 | 4 | SQL Enforcement Wrapper | Apply 20k threshold | ✅ Implemented |
-| 5 | Sample Execution | Verify query executes | 🔄 Future |
+| 5 | Sample Execution | Verify query executes on sample data | ✅ Implemented |
 | 7 | LLM Validation | Detect prompt injection | 🔄 Future |
 | 8 | ASCII Output Validation | Prevent data exfiltration | 🔄 Future |
 
-**Phase 1 Status**: Layers 0, 2, 3, and 4 are fully implemented and tested.
+**Implementation Status**: Layers 0, 2, 3, 4, and 5 are fully implemented and tested (137 tests, 87% coverage).
 
 ### HIPAA Compliance
 
@@ -284,6 +284,12 @@ hipaa-query-validator/
 - **E401**: Subquery not allowed
 - **E402**: CTE (WITH clause) not allowed
 
+### Layer 5: Sample Execution (E501-E599)
+- **E501**: Query execution failed on sample data
+- **E502**: Query exceeded timeout limit
+- **E503**: Query returned zero rows (warning only)
+- **E504**: Result set too large
+
 All error codes include:
 - Detailed error message
 - Educational guidance
@@ -322,9 +328,9 @@ The OMOP Common Data Model schema is defined in `config/schemas/omop_5.4.yaml`. 
 
 ## Roadmap
 
-### Phase 2: Execution & Security (Future)
+### Phase 2: Execution & Security (In Progress)
 - [ ] Layer 1: Schema validation
-- [ ] Layer 5: Sample execution
+- [x] Layer 5: Sample execution (v2.0.0)
 - [ ] Layer 6: Read-only enforcement
 - [ ] Zero-knowledge container execution
 

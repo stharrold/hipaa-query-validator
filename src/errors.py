@@ -294,6 +294,108 @@ class CTENotAllowedError(EnforcementError):
         super().__init__("E402", message, {})
 
 
+# Layer 5: Sample Execution Validation Errors (E501-E599)
+
+
+class SampleExecutionError(ValidationError):
+    """Base class for sample execution validation errors."""
+
+    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
+        """Initialize sample execution error."""
+        super().__init__(code, message, "sample_execution", details)
+
+
+class QueryExecutionError(SampleExecutionError):
+    """Error E501: Query failed during sample execution."""
+
+    def __init__(self, sql_error: str, error_message: str) -> None:
+        """Initialize query execution error.
+
+        Args:
+            sql_error: SQL error type/name
+            error_message: Detailed error message from database
+        """
+        message = (
+            f"Query execution failed on sample data.\n\n"
+            f"SQL Error: {sql_error}\n\n"
+            f"Your query has a runtime error that was caught during sample execution.\n"
+            f"Please review the error message and fix the query syntax or logic.\n\n"
+            f"Common issues:\n"
+            f"- Division by zero\n"
+            f"- Type mismatches (e.g., comparing string to number)\n"
+            f"- Invalid date formats\n"
+            f"- Function errors (e.g., invalid CAST)\n"
+            f"- Missing columns or tables\n\n"
+            f"Error details: {error_message}"
+        )
+        details = {"sql_error": sql_error, "error_message": error_message}
+        super().__init__("E501", message, details)
+
+
+class QueryTimeoutError(SampleExecutionError):
+    """Error E502: Query exceeded timeout limit."""
+
+    def __init__(self, timeout_ms: int) -> None:
+        """Initialize query timeout error.
+
+        Args:
+            timeout_ms: Timeout limit in milliseconds
+        """
+        message = (
+            f"Query exceeded timeout limit ({timeout_ms}ms).\n\n"
+            f"Your query took too long to execute on sample data. This may indicate:\n"
+            f"- Cartesian product (missing JOIN condition)\n"
+            f"- Inefficient query structure\n"
+            f"- Missing WHERE clause filtering\n"
+            f"- Too many aggregations\n\n"
+            f"Please optimize your query for better performance."
+        )
+        details = {"timeout_ms": timeout_ms}
+        super().__init__("E502", message, details)
+
+
+class EmptyResultSetError(SampleExecutionError):
+    """Error E503: Query returned zero rows (warning only)."""
+
+    def __init__(self) -> None:
+        """Initialize empty result set error."""
+        message = (
+            "Query returned zero rows on sample data.\n\n"
+            "While this may be valid for your production data, it's unusual for sample data\n"
+            "which contains 1000 synthetic patients with various conditions.\n\n"
+            "Please verify:\n"
+            "- WHERE clause is not too restrictive\n"
+            "- JOIN conditions are correct\n"
+            "- Date ranges are reasonable\n"
+            "- Concept IDs are valid\n\n"
+            "Note: This is a warning, not an error. Your query may still be valid."
+        )
+        super().__init__("E503", message, {})
+
+
+class ResultSetTooLargeError(SampleExecutionError):
+    """Error E504: Result set exceeds memory limit."""
+
+    def __init__(self, row_count: int, max_rows: int) -> None:
+        """Initialize result set too large error.
+
+        Args:
+            row_count: Actual number of rows returned
+            max_rows: Maximum allowed rows
+        """
+        message = (
+            f"Result set too large ({row_count:,} rows).\n\n"
+            f"Your query returned {row_count:,} rows, exceeding the limit of {max_rows:,}.\n"
+            f"This may indicate:\n"
+            f"- Missing GROUP BY clause\n"
+            f"- Cartesian product (missing JOIN condition)\n"
+            f"- Missing aggregation\n\n"
+            f"Please review your query structure."
+        )
+        details = {"row_count": row_count, "max_rows": max_rows}
+        super().__init__("E504", message, details)
+
+
 # Layer 1: Schema Validation Errors (E101-E199)
 
 
