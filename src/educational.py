@@ -168,14 +168,53 @@ def get_educational_guidance(error_code: str) -> tuple[str, str | None]:
             "       COUNT(DISTINCT person_id) AS Count_Patients\n"
             "FROM person\nGROUP BY gender_concept_id  -- No CTEs allowed",
         ),
-        # System Errors (E801-E899)
+        # Layer 8: ASCII Output Validation (E801-E899)
         "E801": (
+            "Your query returned results containing non-ASCII characters, which are prohibited "
+            "for security and compliance reasons. This indicates that your source data contains "
+            "Unicode characters.\n\n"
+            "Possible causes:\n"
+            "- Source database contains international characters\n"
+            "- Encoding issues in data import\n"
+            "- Unicode in PHI fields (potential security issue)\n\n"
+            "Actions to take:\n"
+            "1. Review the data in the identified column and row\n"
+            "2. Check if source data needs ASCII conversion\n"
+            "3. Contact your system administrator if this is unexpected\n"
+            "4. Ensure all data meets ASCII-only requirements",
+            None,  # No correct pattern - this is a data issue
+        ),
+        "E803": (
+            "The query results show a patient count below the HIPAA Safe Harbor minimum "
+            "threshold of 20,000 patients. This should have been prevented by earlier "
+            "validation layers.\n\n"
+            "This error indicates a system integrity issue. The SQL enforcement wrapper "
+            "should have blocked queries that don't meet the threshold.\n\n"
+            "Please contact your system administrator immediately. Do not attempt to "
+            "modify the query, as this represents a potential security control failure.",
+            None,  # System issue, not a query fix
+        ),
+        "E805": (
+            "Your query returned too many rows, which may indicate:\n\n"
+            "1. Missing GROUP BY clause - you may be returning individual records instead "
+            "of aggregated results\n"
+            "2. Missing aggregation - use COUNT, SUM, AVG, etc.\n"
+            "3. Cartesian product - missing JOIN conditions between tables\n\n"
+            "HIPAA-compliant queries should return aggregated statistics, not individual "
+            "records. Review your query structure.",
+            "SELECT gender_concept_id,\n"
+            "       COUNT(DISTINCT person_id) AS Count_Patients\n"
+            "FROM person\n"
+            "GROUP BY gender_concept_id  -- Aggregated results, not individual rows",
+        ),
+        # System Errors (E901-E999)
+        "E901": (
             "There is an error in the system configuration file. Please contact your "
             "system administrator to resolve this issue. This is not a problem with "
             "your query.",
             None,
         ),
-        "E802": (
+        "E902": (
             "The SQL parser encountered an error while analyzing your query. This could be "
             "due to invalid SQL syntax. Please verify your query syntax is correct.\n\n"
             "Common issues: missing semicolons, unbalanced parentheses, invalid keywords, "
