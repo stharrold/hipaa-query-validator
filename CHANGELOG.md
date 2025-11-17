@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-11-17
+
+### Added
+- Layer 5: Sample Query Execution Validation (#57)
+  - Executes validated queries against synthetic sample data (1000 patients)
+  - Catches runtime errors before production execution:
+    - SQL syntax errors (E501)
+    - Type mismatches and invalid functions
+    - Division by zero
+    - Performance issues (cartesian products)
+  - In-memory SQLite database with OMOP-compliant sample data
+  - Error codes: E501-E504
+  - Sample data generator (`src/sample_data/generator.py`)
+    - 1000 synthetic persons with realistic demographics
+    - 3000-5000 condition occurrences
+    - 1000 observation periods
+    - Singleton pattern for efficient memory usage (<5MB)
+  - Sample execution validator (`src/validators/sample_execution.py`)
+    - Execution timeout enforcement (500ms default)
+    - Result set size validation (10,000 row limit)
+    - Empty result handling (warning, not error)
+  - 24 new comprehensive unit tests in `tests/unit/test_sample_execution.py`
+  - Integration with existing end-to-end test suite
+  - Documentation updates in README.md and CLAUDE.md
+
+### Changed
+- Test suite expanded from 113 to 137 tests (+24 tests)
+- Code coverage increased to 87% (from 85%)
+- Updated validation pipeline to include Layer 5 after enforcement wrapper
+- Updated CLAUDE.md with Layer 5 implementation guidance
+
+### Documentation
+- Added Layer 5 error codes (E501-E504) to README.md
+- Updated validation layers table to show Layer 5 as implemented
+- Updated roadmap to mark Layer 5 as complete in Phase 2
+
+### Performance
+- Sample execution completes in <500ms for typical queries
+- Database initialization <100ms on first use
+- Negligible overhead due to singleton pattern
+
 ## [1.2.2] - 2025-11-17
 
 ### Fixed
