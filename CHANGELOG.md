@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.0] - 2024-11-17
+## [1.2.0] - 2025-11-17
 
 ### Added
 - Automated CI/CD testing pipeline with GitHub Actions
