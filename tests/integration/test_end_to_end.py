@@ -17,10 +17,13 @@ from src.errors import (
     NonASCIICharacterError,
     SelectStarError,
     SubqueryNotAllowedError,
+    UnknownColumnError,
+    UnknownTableError,
 )
 from src.validators.aggregation import validate_aggregation
 from src.validators.ascii_input import validate_ascii_input
 from src.validators.phi import validate_phi
+from src.validators.schema import validate_schema
 
 
 def generate_request_id() -> str:
@@ -45,6 +48,10 @@ class TestValidQueryEndToEnd:
         # Layer 0: ASCII validation
         result_0 = validate_ascii_input(query, request_id)
         assert result_0.success is True
+
+        # Layer 1: Schema validation
+        result_1 = validate_schema(query, request_id)
+        assert result_1.success is True
 
         # Layer 2: PHI validation
         result_2 = validate_phi(query, request_id)
@@ -80,6 +87,7 @@ class TestValidQueryEndToEnd:
 
         # All layers should pass
         assert validate_ascii_input(query, request_id).success is True
+        assert validate_schema(query, request_id).success is True
         assert validate_phi(query, request_id).success is True
         assert validate_aggregation(query, request_id).success is True
         assert validate_no_circumvention(query, request_id).success is True
@@ -94,6 +102,7 @@ class TestValidQueryEndToEnd:
         request_id = generate_request_id()
 
         assert validate_ascii_input(query, request_id).success is True
+        assert validate_schema(query, request_id).success is True
         assert validate_phi(query, request_id).success is True
         assert validate_aggregation(query, request_id).success is True
         assert validate_no_circumvention(query, request_id).success is True
@@ -357,6 +366,7 @@ class TestPerformance:
         start = time.time()
 
         validate_ascii_input(query, request_id)
+        validate_schema(query, request_id)
         validate_phi(query, request_id)
         validate_aggregation(query, request_id)
         validate_no_circumvention(query, request_id)
@@ -364,9 +374,9 @@ class TestPerformance:
         end = time.time()
         elapsed_ms = (end - start) * 1000
 
-        # Performance target: <10ms (p95)
-        # For single query, should be well under this
-        assert elapsed_ms < 50  # Allow some margin for test environment
+        # Performance target: <10ms (p95) with Layer 1
+        # Updated to allow for schema validation overhead
+        assert elapsed_ms < 60  # Allow some margin for test environment
 
 
 class TestRealWorldQueries:
@@ -387,6 +397,7 @@ class TestRealWorldQueries:
         request_id = generate_request_id()
 
         assert validate_ascii_input(query, request_id).success is True
+        assert validate_schema(query, request_id).success is True
         assert validate_phi(query, request_id).success is True
         assert validate_aggregation(query, request_id).success is True
         assert validate_no_circumvention(query, request_id).success is True
@@ -405,6 +416,45 @@ class TestRealWorldQueries:
         request_id = generate_request_id()
 
         assert validate_ascii_input(query, request_id).success is True
+        assert validate_schema(query, request_id).success is True
         assert validate_phi(query, request_id).success is True
         assert validate_aggregation(query, request_id).success is True
         assert validate_no_circumvention(query, request_id).success is True
+
+
+class TestLayer1Failures:
+    """Tests for queries failing at Layer 1 (schema validation)."""
+
+    def test_invalid_table_rejection(self):
+        """Test rejection at Layer 1 for invalid table."""
+        query = "SELECT * FROM invalid_table_name"
+        request_id = generate_request_id()
+
+        # Layer 0 passes
+        assert validate_ascii_input(query, request_id).success is True
+
+        # Layer 1 fails
+        with pytest.raises(UnknownTableError) as exc_info:
+            validate_schema(query, request_id)
+
+        error = exc_info.value
+        assert error.code == "E101"
+        assert error.layer == "schema"
+        assert "invalid_table_name" in str(error).lower()
+
+    def test_invalid_column_rejection(self):
+        """Test rejection at Layer 1 for invalid column."""
+        query = "SELECT person.bad_column FROM person"
+        request_id = generate_request_id()
+
+        # Layer 0 passes
+        assert validate_ascii_input(query, request_id).success is True
+
+        # Layer 1 fails
+        with pytest.raises(UnknownColumnError) as exc_info:
+            validate_schema(query, request_id)
+
+        error = exc_info.value
+        assert error.code == "E102"
+        assert error.layer == "schema"
+        assert "bad_column" in str(error)

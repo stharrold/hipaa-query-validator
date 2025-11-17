@@ -5,6 +5,8 @@ used throughout the validation system. Each error includes educational
 guidance to help users understand and fix issues.
 """
 
+from typing import Set
+
 
 class ValidationError(Exception):
     """Base exception for all validation errors.
@@ -308,14 +310,42 @@ class SchemaValidationError(ValidationError):
 class UnknownTableError(SchemaValidationError):
     """Error E101: Table not found in approved schema."""
 
-    def __init__(self, table_name: str, schema: str) -> None:
+    def __init__(self, table_name: str, schema: str, valid_tables: Set[str] | None = None) -> None:
         """Initialize unknown table error.
 
         Args:
             table_name: Name of the unknown table
             schema: Schema version (e.g., 'OMOP 5.4')
+            valid_tables: Set of valid table names for educational guidance
         """
-        message = f"Table '{table_name}' not found in {schema} schema"
+        # Build educational guidance
+        guidance_lines = [
+            f"Table '{table_name}' is not found in the {schema} schema.\n",
+            "This query cannot be validated because it references an unknown or unauthorized table.\n",
+        ]
+
+        if valid_tables and len(valid_tables) > 0:
+            # Show sample of valid tables
+            sample_tables = sorted(list(valid_tables))[:10]
+            tables_str = ", ".join(sample_tables)
+            if len(valid_tables) > 10:
+                tables_str += f", ... ({len(valid_tables)} total tables)"
+
+            guidance_lines.append(f"\nValid {schema} tables include:")
+            guidance_lines.append(f"{tables_str}\n")
+
+            # Common OMOP tables
+            guidance_lines.append("\nCommon OMOP CDM tables:")
+            guidance_lines.append("- person (patient demographics)")
+            guidance_lines.append("- condition_occurrence (diagnoses)")
+            guidance_lines.append("- drug_exposure (medications)")
+            guidance_lines.append("- visit_occurrence (encounters)")
+            guidance_lines.append("- measurement (lab results)")
+            guidance_lines.append("- observation (clinical observations)")
+
+        guidance_lines.append("\n\nPlease verify the table name and try again.")
+
+        message = "".join(guidance_lines)
         details = {"table_name": table_name, "schema": schema}
         super().__init__("E101", message, details)
 
@@ -323,17 +353,52 @@ class UnknownTableError(SchemaValidationError):
 class UnknownColumnError(SchemaValidationError):
     """Error E102: Column not found in table schema."""
 
-    def __init__(self, column_name: str, table_name: str, schema: str) -> None:
+    def __init__(
+        self, column_name: str, table_name: str, schema: str, valid_columns: Set[str] | None = None
+    ) -> None:
         """Initialize unknown column error.
 
         Args:
             column_name: Name of the unknown column
             table_name: Name of the table
             schema: Schema version
+            valid_columns: Set of valid column names for educational guidance
         """
-        message = f"Column '{column_name}' not found in table '{table_name}' ({schema})"
+        # Build educational guidance
+        guidance_lines = [
+            f"Column '{column_name}' is not found in table '{table_name}' ({schema}).\n",
+            "This query cannot be validated because it references an unknown column.\n",
+        ]
+
+        if valid_columns and len(valid_columns) > 0:
+            # Show sample of valid columns
+            sample_columns = sorted(list(valid_columns))[:15]
+            columns_str = ", ".join(sample_columns)
+            if len(valid_columns) > 15:
+                columns_str += f", ... ({len(valid_columns)} total columns)"
+
+            guidance_lines.append(f"\nValid columns for '{table_name}':")
+            guidance_lines.append(f"{columns_str}")
+
+        guidance_lines.append("\n\nPlease verify the column name and try again.")
+
+        message = "".join(guidance_lines)
         details = {"column_name": column_name, "table_name": table_name, "schema": schema}
         super().__init__("E102", message, details)
+
+
+class SchemaNotLoadedError(SchemaValidationError):
+    """Error E103: Schema configuration not loaded."""
+
+    def __init__(self) -> None:
+        """Initialize schema not loaded error."""
+        message = (
+            "Schema configuration not loaded.\n\n"
+            "The OMOP schema definition file could not be loaded. "
+            "This is a system configuration error.\n\n"
+            "Please contact your system administrator."
+        )
+        super().__init__("E103", message, {})
 
 
 # System Errors (E801-E899)
