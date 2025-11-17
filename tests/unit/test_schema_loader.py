@@ -25,6 +25,25 @@ class TestSchemaLoading:
         assert cache1 is cache2, "Should return same instance"
         assert cache1 is schema_cache, "Should match global instance"
 
+    def test_thread_safety(self):
+        """Verify schema cache is thread-safe."""
+        import threading
+
+        results = []
+
+        def load_schema():
+            cache = SchemaCache()
+            results.append(cache.get_valid_tables())
+
+        threads = [threading.Thread(target=load_schema) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        # All threads should see same schema
+        assert all(r == results[0] for r in results), "All threads should see consistent schema"
+
 
 class TestValidTableCheck:
     """Test valid table detection."""

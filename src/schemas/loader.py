@@ -21,20 +21,20 @@ class SchemaCache:
     """
 
     _instance: "SchemaCache | None" = None
-    _schema_data: Dict[str, Set[str]] = {}
-    _loaded: bool = False
 
     def __new__(cls) -> "SchemaCache":
         """Create or return singleton instance."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance._schema_data = {}  # Instance-level initialization
+            cls._instance._loaded = False
         return cls._instance
 
     def __init__(self) -> None:
         """Initialize schema cache (loads schema on first instantiation)."""
         if not self._loaded:
             self._load_schema()
-            self.__class__._loaded = True
+            self._loaded = True
 
     def _load_schema(self) -> None:
         """Load OMOP schema from YAML configuration.
