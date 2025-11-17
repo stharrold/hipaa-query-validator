@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-11-17
+
+### Added
+- Automated CI/CD testing pipeline with GitHub Actions
+  - Tests on Python 3.11 and 3.12 (matrix strategy)
+  - Runs black, mypy, ruff, and pytest on all PRs
+  - Enforces >=85% code coverage requirement
+  - Uploads HTML coverage reports as artifacts
+- Package manager integration with `uv`
+  - Added uv.lock for reproducible dependency management
+  - All development commands now use `uv run` prefix
+- Python version requirements documentation (Python 3.11+ required)
+
+### Fixed
+- Corrected test count documentation from 114 to actual 113 tests (#38, #39)
+  - ASCII: 29 tests
+  - PHI: 39 tests (corrected from 40)
+  - Aggregation: 28 tests
+  - Integration: 17 tests
+
+### Documentation
+- Consolidated ISSUE_CLOSURE_PROTOCOL.md into CLAUDE.md (#12, #31, #32)
+  - Improved discoverability for AI agents and developers
+  - Single source of truth for development guidelines
+- Added comprehensive CI/CD documentation section
+- Added setup instructions for uv package manager
+- Updated all command examples to use `uv run` prefix
+
 ## [1.1.1] - 2024-11-16
 
 ### Fixed
@@ -44,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - HIPAA Safe Harbor compliance enforcement
 - Educational error messaging system
 
-[Unreleased]: https://github.com/stharrold/hipaa-query-validator/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/stharrold/hipaa-query-validator/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/stharrold/hipaa-query-validator/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/stharrold/hipaa-query-validator/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/stharrold/hipaa-query-validator/releases/tag/v1.1.0
