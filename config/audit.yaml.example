@@ -1,0 +1,188 @@
+# HIPAA-Compliant Audit Logging Configuration
+#
+# This configuration file defines settings for the audit logging system
+# that meets HIPAA requirements per 45 CFR § 164.312(b) (Audit Controls)
+# and 45 CFR § 164.530(j) (Documentation and Retention).
+#
+# CRITICAL: Copy this file to audit.yaml and customize for your environment.
+# DO NOT commit audit.yaml to version control (contains sensitive paths).
+
+audit_logging:
+  # Enable/disable audit logging
+  # PRODUCTION: Must be true for HIPAA compliance
+  # DEVELOPMENT: Can be false for local testing
+  enabled: true
+
+  # Directory for audit log files
+  # PRODUCTION: Use secure, monitored directory with restricted permissions
+  # RECOMMENDED: /var/log/hipaa_validator or similar
+  log_dir: "/var/log/hipaa_validator"
+
+  # Log format (JSONL only)
+  # JSONL = one JSON object per line for efficient parsing and streaming
+  format: "jsonl"
+
+  # Log rotation settings
+  rotation:
+    # Rotation method: "time" (recommended) or "size"
+    method: "time"
+
+    # When to rotate (for time-based rotation)
+    # Options: "midnight", "H" (hourly), "W0" (Monday), etc.
+    # RECOMMENDED: "midnight" for daily rotation
+    when: "midnight"
+
+    # Number of backup files to retain
+    # HIPAA REQUIREMENT: 6 years = 2190 days (daily rotation)
+    # For hourly: 6 years = 52,560 backups
+    backup_count: 2190  # 6 years of daily logs
+
+    # For size-based rotation (if method: "size")
+    # max_bytes: 104857600  # 100 MB
+    # backup_count: 2190
+
+  # Log signing for tamper detection
+  signing:
+    # Enable HMAC-SHA256 signing
+    # PRODUCTION: Must be true for tamper detection
+    enabled: true
+
+    # Environment variable containing signing key
+    # KEY REQUIREMENTS:
+    #   - Minimum 32 bytes (256 bits)
+    #   - Cryptographically random
+    #   - Stored securely (e.g., AWS Secrets Manager, HashiCorp Vault)
+    #   - Rotated periodically (e.g., annually)
+    #
+    # GENERATE KEY:
+    #   python3 -c "import secrets; print(secrets.token_hex(32))"
+    #
+    # SET KEY:
+    #   export AUDIT_SIGNING_KEY="your-key-here"
+    key_env: "AUDIT_SIGNING_KEY"
+
+  # Privacy settings
+  privacy:
+    # Log query hash (SHA-256) - ALWAYS ENABLED
+    # This allows query tracking without PHI exposure
+    log_query_hash: true
+
+    # Log full query text - NEVER ENABLE IN PRODUCTION
+    # HIPAA RISK: Queries may contain PHI in WHERE clauses
+    # This setting exists only for documentation - DO NOT USE
+    log_full_query: false
+
+  # Performance settings
+  performance:
+    # Maximum logging overhead (milliseconds)
+    # Target: < 5ms per event
+    max_overhead_ms: 5
+
+    # Async logging (future enhancement)
+    # async: false
+
+# Event-specific settings
+events:
+  # Log successful validations
+  log_validation_success: true
+
+  # Log validation failures
+  log_validation_failure: true
+
+  # Log validation errors
+  log_validation_errors: true
+
+  # Log security events (SQL injection, circumvention)
+  log_security_events: true
+
+  # Truncate long messages (characters)
+  # Prevents log bloat from extremely long error messages
+  max_message_length: 200
+
+# Monitoring and alerting (future enhancement)
+monitoring:
+  # Enable real-time monitoring
+  enabled: false
+
+  # Alert on security events
+  alert_on_security_events: true
+
+  # Alert threshold (events per minute)
+  alert_threshold: 10
+
+  # Webhook for alerts
+  # webhook_url: "https://your-monitoring-system/webhook"
+
+# Compliance settings
+compliance:
+  # Retention period (days)
+  # HIPAA REQUIREMENT: Minimum 6 years (2190 days)
+  retention_days: 2190
+
+  # Backup settings (future enhancement)
+  # backup:
+  #   enabled: true
+  #   destination: "s3://your-bucket/audit-logs/"
+  #   frequency: "daily"
+
+  # Encryption at rest (handled by filesystem/cloud storage)
+  # encryption:
+  #   enabled: true
+  #   method: "AES-256"
+
+# Development/testing settings
+development:
+  # Use temporary directory for logs (development only)
+  use_temp_dir: false
+
+  # Verbose logging (development only)
+  verbose: false
+
+  # Log to console in addition to file
+  log_to_console: false
+
+# File permissions (Unix/Linux)
+permissions:
+  # Log directory permissions (octal)
+  # RECOMMENDED: 0750 (rwxr-x---)
+  log_dir_mode: "0750"
+
+  # Log file permissions (octal)
+  # RECOMMENDED: 0640 (rw-r-----)
+  log_file_mode: "0640"
+
+  # Owner and group (if running as specific user)
+  # owner: "hipaa_validator"
+  # group: "hipaa_auditors"
+
+# Notes for production deployment:
+#
+# 1. SIGNING KEY:
+#    - Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
+#    - Store in secure key management system
+#    - Set environment variable before starting application
+#
+# 2. LOG DIRECTORY:
+#    - Create directory: sudo mkdir -p /var/log/hipaa_validator
+#    - Set permissions: sudo chmod 0750 /var/log/hipaa_validator
+#    - Set ownership: sudo chown hipaa_validator:hipaa_auditors /var/log/hipaa_validator
+#
+# 3. LOG ROTATION:
+#    - Verify backup_count matches retention requirements
+#    - Monitor disk space (6 years of logs can be large)
+#    - Consider archiving old logs to cold storage
+#
+# 4. MONITORING:
+#    - Set up alerts for security events
+#    - Monitor log file sizes and rotation
+#    - Periodically verify log signatures
+#
+# 5. BACKUP:
+#    - Backup logs to secure, redundant storage
+#    - Test log restoration procedures
+#    - Encrypt backups at rest and in transit
+#
+# 6. ACCESS CONTROL:
+#    - Restrict log access to authorized personnel only
+#    - Audit log access (log the loggers!)
+#    - Implement need-to-know access policies

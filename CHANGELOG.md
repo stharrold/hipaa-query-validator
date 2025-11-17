@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- HIPAA-compliant audit logging system (#62)
+  - JSONL event format with one event per line
+  - HMAC-SHA256 log signing for tamper detection
+  - Query hashing (SHA-256) to prevent PHI exposure in logs
+  - Time-based log rotation with 6-year retention (HIPAA requirement)
+  - Comprehensive event tracking: validation, errors, security events
+  - Performance: <5ms overhead per event
+  - Three event types: QUERY_VALIDATION, VALIDATION_ERROR, SECURITY_EVENT
+  - Singleton logger pattern for consistent application-wide logging
+  - Environment-based signing key configuration
+  - Detailed audit configuration file (config/audit.yaml.example)
+- Unified validator module (src/validator.py)
+  - Main entry point for query validation with integrated audit logging
+  - Sequential validation pipeline: Layer 0 → 2 → 3 → 4
+  - Performance tracking for each validation layer
+  - Automatic security event detection for circumvention attempts
+  - Support for user_id, session_id, ip_address, container_id tracking
+  - Silent validation mode for internal use without audit logging
+
+### Testing
+- Added 63 new audit logging tests (test_audit_logger.py)
+  - Query hashing tests (5 tests)
+  - Event creation tests (11 tests)
+  - JSONL formatter tests (3 tests)
+  - Audit logger tests (7 tests)
+  - Performance tests (2 tests)
+  - Field validation tests (3 tests)
+- Added 15 new validator integration tests (test_validator.py)
+  - Request ID generation tests
+  - Valid query validation tests (3 tests)
+  - Invalid query validation tests (6 tests)
+  - Audit logging integration tests (4 tests)
+  - Performance tracking tests (3 tests)
+  - Silent validation tests (3 tests)
+- All 191 tests passing (113 original + 78 new)
+- Code coverage maintained at ≥85%
+
+### Documentation
+- Added comprehensive audit logging configuration (config/audit.yaml.example)
+  - HIPAA compliance settings (6-year retention)
+  - Security settings (HMAC signing, permissions)
+  - Privacy settings (query hashing, no full query logging)
+  - Production deployment guidelines
+  - Key generation and rotation instructions
+
 ## [1.2.2] - 2025-11-17
 
 ### Fixed
