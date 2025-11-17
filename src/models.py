@@ -6,7 +6,7 @@ system, including validation results, query metadata, and audit information.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 @dataclass
@@ -27,15 +27,15 @@ class ValidationResult:
 
     success: bool
     request_id: str
-    layer: Optional[str] = None
-    code: Optional[str] = None
-    message: Optional[str] = None
-    educational_guidance: Optional[str] = None
-    correct_pattern: Optional[str] = None
+    layer: str | None = None
+    code: str | None = None
+    message: str | None = None
+    educational_guidance: str | None = None
+    correct_pattern: str | None = None
     timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert validation result to dictionary for serialization."""
         return {
             "success": self.success,
@@ -64,11 +64,11 @@ class QueryMetadata:
 
     query_hash: str
     validation_time_ms: float
-    layer_times: Dict[str, float] = field(default_factory=dict)
+    layer_times: dict[str, float] = field(default_factory=dict)
     layers_passed: list[str] = field(default_factory=list)
     total_layers: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert query metadata to dictionary for serialization."""
         return {
             "query_hash": self.query_hash,
@@ -102,11 +102,11 @@ class AuditLogEntry:
     timestamp: str
     query_hash: str
     validation_result: str  # PASS, FAIL, or ERROR
-    layer_failed: Optional[str] = None
-    error_code: Optional[str] = None
-    user_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    session_id: Optional[str] = None
+    layer_failed: str | None = None
+    error_code: str | None = None
+    user_id: str | None = None
+    ip_address: str | None = None
+    session_id: str | None = None
 
     def to_jsonl(self) -> str:
         """Convert audit log entry to JSONL format for append-only logging."""
@@ -145,7 +145,7 @@ class PHIIdentifier:
     description: str
     cfr_reference: str = "45 CFR § 164.514(b)(2)"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert PHI identifier to dictionary."""
         return {
             "name": self.name,

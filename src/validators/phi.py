@@ -26,12 +26,12 @@ Blocked Identifiers (18 categories):
 
 import re
 from pathlib import Path
-from typing import Dict, Optional, Set
+from typing import Any, cast
 
-import sqlparse
+import sqlparse  # type: ignore[import-untyped]
 import yaml
-from sqlparse.sql import Identifier, IdentifierList
-from sqlparse.tokens import Keyword, Wildcard
+from sqlparse.sql import Identifier, IdentifierList  # type: ignore[import-untyped]
+from sqlparse.tokens import Keyword, Wildcard  # type: ignore[import-untyped]
 
 from ..errors import (
     DatePHIError,
@@ -48,7 +48,7 @@ SELECT_STAR_PATTERN = re.compile(r"\bSELECT\s+\*\s+FROM\b")
 class PHIValidator:
     """Validator for HIPAA PHI identifiers in SQL queries."""
 
-    def __init__(self, phi_config_path: Optional[Path] = None) -> None:
+    def __init__(self, phi_config_path: Path | None = None) -> None:
         """Initialize PHI validator with configuration.
 
         Args:
@@ -59,7 +59,7 @@ class PHIValidator:
         self.geographic_prohibited = self._build_identifier_patterns("geographic_prohibited")
         self.date_prohibited = self._build_identifier_patterns("date_prohibited")
 
-    def _load_phi_config(self, config_path: Optional[Path]) -> Dict:
+    def _load_phi_config(self, config_path: Path | None) -> dict:
         """Load PHI identifiers from YAML configuration.
 
         Args:
@@ -79,9 +79,9 @@ class PHIValidator:
             return self._get_default_phi_config()
 
         with open(config_path) as f:
-            return yaml.safe_load(f)
+            return cast(dict[Any, Any], yaml.safe_load(f))
 
-    def _get_default_phi_config(self) -> Dict:
+    def _get_default_phi_config(self) -> dict:
         """Get default PHI identifier patterns (hardcoded fallback).
 
         Returns:
@@ -181,7 +181,7 @@ class PHIValidator:
             ],
         }
 
-    def _build_identifier_patterns(self, category: str) -> Set[str]:
+    def _build_identifier_patterns(self, category: str) -> set[str]:
         """Build set of identifier patterns for a category.
 
         Args:
@@ -410,7 +410,7 @@ class PHIValidator:
         if column_lower in self.date_prohibited:
             raise DatePHIError(column_name=column_name, clause=clause)
 
-    def _extract_column_name(self, identifier: Identifier) -> Optional[str]:
+    def _extract_column_name(self, identifier: Identifier) -> str | None:
         """Extract the actual column name from an identifier.
 
         Handles:
@@ -428,7 +428,7 @@ class PHIValidator:
         # Get the real name (before alias)
         name = identifier.get_real_name()
         if name:
-            return name
+            return cast(str | None, name)
 
         # Try to get the full name
         name = identifier.get_name()
@@ -436,7 +436,7 @@ class PHIValidator:
             # Remove table prefix if present (e.g., "person.person_id" -> "person_id")
             if "." in name:
                 name = name.split(".")[-1]
-            return name
+            return cast(str | None, name)
 
         return None
 
@@ -480,9 +480,7 @@ class PHIValidator:
         return "unique identifier (Category 18)"
 
 
-def validate_phi(
-    query: str, request_id: str, config_path: Optional[Path] = None
-) -> ValidationResult:
+def validate_phi(query: str, request_id: str, config_path: Path | None = None) -> ValidationResult:
     """Validate query for PHI columns (convenience function).
 
     Args:

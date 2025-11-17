@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2025-11-17
+
+### Fixed
+- Enhanced CI/CD testing workflow for improved reliability (#44, #45, #47)
+  - Pinned uv version to 0.5.0 for reproducible builds
+  - Replaced curl installation with astral-sh/setup-uv@v1 action (improved security)
+  - Added explicit workflow permissions (contents: read, pull-requests: read)
+  - Added --diff flag to black check for better diagnostics on failures
+  - Follows principle of least privilege for HIPAA audit compliance
+- Updated package dependencies in uv.lock (#52)
+
+### Documentation
+- Verified and confirmed test counts in CLAUDE.md are correct at 113 tests (#30)
+- Verified and confirmed test count in CHANGELOG.md is correct (#29)
+- Verified and confirmed no date typos in CHANGELOG.md (#25)
+- Verified import re statement exists in src/enforcer.py (#26)
+
 ## [1.2.1] - 2025-11-17
 
 ### Documentation
@@ -83,7 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - HIPAA Safe Harbor compliance enforcement
 - Educational error messaging system
 
-[Unreleased]: https://github.com/stharrold/hipaa-query-validator/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/stharrold/hipaa-query-validator/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/stharrold/hipaa-query-validator/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/stharrold/hipaa-query-validator/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/stharrold/hipaa-query-validator/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/stharrold/hipaa-query-validator/compare/v1.1.0...v1.1.1

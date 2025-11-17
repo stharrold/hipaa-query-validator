@@ -11,10 +11,9 @@ The minimum threshold of 20,000 patients is enforced separately in Layer 4.
 """
 
 import re
-from typing import List, Tuple
 
-import sqlparse
-from sqlparse.sql import Function, Identifier, IdentifierList
+import sqlparse  # type: ignore[import-untyped]
+from sqlparse.sql import Function, Identifier, IdentifierList  # type: ignore[import-untyped]
 
 from ..errors import (
     AggregateInNonSelectError,
@@ -23,7 +22,6 @@ from ..errors import (
     MissingPatientCountError,
 )
 from ..models import ValidationResult
-
 
 # Required patient count pattern (exact match)
 # Accepts: person_id, p.person_id, person.person_id, etc.
@@ -48,10 +46,10 @@ class AggregationValidator:
         """Initialize aggregation validator."""
         self.has_group_by = False
         self.has_patient_count = False
-        self.select_aggregates: List[str] = []
-        self.select_regular_columns: List[str] = []  # Non-aggregate columns in SELECT
-        self.non_select_aggregates: List[Tuple[str, str]] = []  # (function, clause)
-        self.group_by_columns: List[str] = []
+        self.select_aggregates: list[str] = []
+        self.select_regular_columns: list[str] = []  # Non-aggregate columns in SELECT
+        self.non_select_aggregates: list[tuple[str, str]] = []  # (function, clause)
+        self.group_by_columns: list[str] = []
 
     def validate_aggregation(self, query: str, request_id: str) -> ValidationResult:
         """Validate query aggregation requirements.
@@ -246,9 +244,10 @@ class AggregationValidator:
         ]
 
         for pattern in count_patterns:
-            if re.search(pattern, normalized_query, re.IGNORECASE):
+            match = re.search(pattern, normalized_query, re.IGNORECASE)
+            if match:
                 # Found incorrect syntax - raise specific error
-                found = re.search(pattern, normalized_query, re.IGNORECASE).group(0)
+                found = match.group(0)
                 raise InvalidPatientCountSyntaxError(found_syntax=found)
 
         return False
@@ -286,7 +285,7 @@ def validate_aggregation(query: str, request_id: str) -> ValidationResult:
     return validator.validate_aggregation(query, request_id)
 
 
-def extract_group_by_columns(query: str) -> List[str]:
+def extract_group_by_columns(query: str) -> list[str]:
     """Extract column names from GROUP BY clause.
 
     Useful for debugging and analysis.

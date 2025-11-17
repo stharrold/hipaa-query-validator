@@ -5,10 +5,8 @@ understand WHY their queries were rejected and HOW to fix them. This follows
 the principle of "educate, don't auto-fix."
 """
 
-from typing import Dict, Optional, Tuple
 
-
-def get_educational_guidance(error_code: str) -> Tuple[str, Optional[str]]:
+def get_educational_guidance(error_code: str) -> tuple[str, str | None]:
     """Get educational guidance and correct pattern for an error code.
 
     Args:
@@ -17,7 +15,7 @@ def get_educational_guidance(error_code: str) -> Tuple[str, Optional[str]]:
     Returns:
         Tuple of (educational_guidance, correct_pattern)
     """
-    guidance_map: Dict[str, Tuple[str, Optional[str]]] = {
+    guidance_map: dict[str, tuple[str, str | None]] = {
         # Layer 0: ASCII Input Validation (E001-E099)
         "E001": (
             "Your query contains non-ASCII characters, which are prohibited for security "
@@ -218,8 +216,8 @@ def get_documentation_link(error_code: str) -> str:
 
 
 def format_educational_response(
-    error_code: str, message: str, details: Optional[Dict] = None
-) -> Dict[str, str]:
+    error_code: str, message: str, details: dict | None = None
+) -> dict[str, str]:
     """Format a complete educational response for an error.
 
     Args:
