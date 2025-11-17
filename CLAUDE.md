@@ -6,7 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 HIPAA Query Validator is a production-ready SQL query validation system that enforces HIPAA Safe Harbor de-identification requirements (45 CFR § 164.514(b)(2)) through an 8-layer defense-in-depth security architecture. The system is designed for healthcare data analytics, ensuring queries cannot expose Protected Health Information (PHI) while enabling privacy-preserving aggregate analysis.
 
-**Current Status**: Phase 1 complete (v1.0.0) - Layers 0, 2, 3, 4 implemented with 110/110 tests passing and 85%+ coverage.
+**Current Status**: Phase 1 complete (v1.0.0) - Layers 0, 2, 3, 4 implemented with 114/114 tests passing and 85%+ coverage.
+
+**Python Requirements**: Python 3.11+ required (uses match statements, StrEnum, improved typing). CI tests on Python 3.11 and 3.12.
+
+**Package Manager**: This project uses `uv` for fast, reliable Python package management. All commands should be prefixed with `uv run` (e.g., `uv run pytest`).
 
 ## Core Architecture
 
@@ -75,52 +79,74 @@ if re.search(r'GROUP\s+BY', statement_str):
 
 ## Development Commands
 
+### Setup
+
+```bash
+# Install dependencies (first time setup)
+uv pip install -e ".[dev]"
+```
+
 ### Testing
 
 ```bash
 # Run all tests with coverage (enforces >=85% coverage requirement)
-pytest
+uv run pytest
 
 # Run specific test file
-pytest tests/unit/test_phi.py
+uv run pytest tests/unit/test_phi.py
 
 # Run single test
-pytest tests/unit/test_phi.py::TestDirectPHIIdentifiers::test_patient_name
+uv run pytest tests/unit/test_phi.py::TestDirectPHIIdentifiers::test_patient_name
 
 # Run with verbose output
-pytest -v
+uv run pytest -v
 
 # Generate HTML coverage report
-pytest --cov=src --cov-report=html
+uv run pytest --cov=src --cov-report=html
 open htmlcov/index.html
 
 # Run tests without coverage checks
-pytest --no-cov
+uv run pytest --no-cov
 ```
 
 ### Code Quality
 
 ```bash
 # Format code (line length: 100)
-black src tests
+uv run black src tests
 
 # Type checking (strict mode enabled)
-mypy src
+uv run mypy src
 
 # Linting
-ruff check src tests
+uv run ruff check src tests
 
 # Run all quality checks
-black src tests && mypy src && ruff check src tests && pytest
+uv run black src tests && uv run mypy src && uv run ruff check src tests && uv run pytest
 ```
 
 ### Configuration
 
-PHI identifiers are defined in `config/schemas/phi_identifiers.yaml`. When adding custom PHI patterns:
-1. Add to appropriate category (direct_identifiers, geographic_prohibited, date_prohibited)
-2. Use lowercase (validator normalizes to lowercase)
-3. Run full test suite to ensure no false positives
-4. Consider HIPAA compliance implications
+**PHI Identifiers**: `config/schemas/phi_identifiers.yaml`
+- Defines all 18 HIPAA Safe Harbor identifier categories
+- Used by Layer 2 (PHI validation)
+- When adding custom PHI patterns:
+  1. Add to appropriate category (direct_identifiers, geographic_prohibited, date_prohibited)
+  2. Use lowercase (validator normalizes to lowercase)
+  3. Run full test suite to ensure no false positives
+  4. Consider HIPAA compliance implications
+
+**OMOP Schema**: `config/schemas/omop_5.4.yaml`
+- OMOP CDM 5.4 table and column definitions
+- Reserved for future Layer 1 (schema validation)
+- Not currently enforced in v1.0.0
+
+**Validator Settings**: `config/validator.yaml.example`
+- Security: min_patient_count (20000), strict_mode
+- Performance: max_query_length, timeouts
+- Audit logging: JSONL output paths
+- Educational: verbosity levels
+- Deployment: development vs. production modes
 
 ### Issue Closure Protocol
 
@@ -132,8 +158,8 @@ PHI identifiers are defined in `config/schemas/phi_identifiers.yaml`. When addin
 - [ ] Closing comment includes: `Closes #ISSUE via PR #NUMBER`
 
 **2. Test Requirements**
-- [ ] Run: `pytest` (all 114 tests pass)
-- [ ] Run: `pytest --cov=src` (coverage ≥85%)
+- [ ] Run: `uv run pytest` (all 114 tests pass)
+- [ ] Run: `uv run pytest --cov=src` (coverage ≥85%)
 - [ ] No test failures or skipped tests
 - [ ] New code has ≥95% line coverage
 
@@ -196,9 +222,32 @@ tests/
 **When modifying validators:**
 1. Read existing test file first to understand patterns
 2. Add new test cases for new behavior
-3. Run affected test file: `pytest tests/unit/test_<layer>.py -v`
-4. Run full suite: `pytest`
+3. Run affected test file: `uv run pytest tests/unit/test_<layer>.py -v`
+4. Run full suite: `uv run pytest`
 5. Verify coverage maintained: Check pytest output for coverage percentage
+
+## CI/CD Automation
+
+**GitHub Actions Workflows:**
+
+**`.github/workflows/tests.yml`** - Automated Testing Pipeline
+- Triggers on pull requests to `develop` or `main` branches
+- Runs on Python 3.11 and 3.12 (matrix strategy)
+- Executes all quality checks: black, mypy, ruff, pytest
+- Enforces >=85% code coverage requirement
+- Uses `uv` for dependency management
+- Uploads HTML coverage reports as artifacts
+
+**`.github/workflows/claude.yml`** - Claude Code Integration
+- Triggers on @claude mentions in issues/PRs
+- Enables Claude to respond to development requests
+- Has read access to issues, PRs, and CI results
+
+**`.github/workflows/claude-code-review.yml`** - Automated PR Reviews
+- Triggers on new PRs or PR updates
+- Claude performs automated code review
+- Reviews code quality, security, performance, test coverage
+- Posts review comments directly on PRs
 
 ## Error Taxonomy
 
@@ -249,7 +298,7 @@ def test_new_phi_identifier(self):
         validate_phi(query, "test-xxx")
 
 # 3. Run tests
-pytest tests/unit/test_phi.py -v
+uv run pytest tests/unit/test_phi.py -v
 ```
 
 ### Modifying Validation Logic
@@ -259,8 +308,8 @@ pytest tests/unit/test_phi.py -v
 # 2. Locate the specific validation method
 # 3. Make changes following existing patterns
 # 4. Update or add tests
-# 5. Run: pytest tests/unit/test_<validator>.py
-# 6. Run full suite: pytest
+# 5. Run: uv run pytest tests/unit/test_<validator>.py
+# 6. Run full suite: uv run pytest
 ```
 
 ### Debugging sqlparse Token Structure
